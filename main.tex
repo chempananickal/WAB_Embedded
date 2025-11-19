@@ -1,0 +1,104 @@
+% Vorlage für WABs der Provadis Hochschule
+% basiert auf "Universität Ulm Praktikumsbericht Vorlage"
+% von Max Sch.
+% CC BY 4.0
+%
+% main.tex
+%
+% Das ist das zentrale Dokument.
+
+
+%persönliche Infos
+\input{Berichtinfos}
+
+\documentclass[
+	a4paper,
+	ngerman,
+	12pt,	% 12pt für Times, 11pt für Arial und 10pt für Verdana
+	bibliography=totoc,
+	listof=totoc,
+	numbers=noendperiod,
+	openany,
+	twoside,
+	headinclude=false,
+	titlepage=firstiscover,
+	abstract=true,
+	headsepline=true,
+	footsepline=true,
+	headings=big,
+	hyphenzone=1.25cm
+	]{scrreprt}
+%Startet das Dokument und regelt gleichzeitig Formatierungen wie Schriftgröße, Papierformat, Zahlenart, Sprache usw.
+% 12pt - die Standardschriftgröße
+% openany - Kapitel dürfen auch auf der "Rückseite" starten, Leerseiten werden vermieden
+% parskip=full - Leerzeilen zwischen Absätzen statt Einrückung
+% twoside - Rückseiten werden mit bedruckt, Seitenzahlen und Binderände werden entsprechen angepasst; Alternative: oneside
+
+% \RedeclareSectionCommand[
+%   beforeskip=-32pt
+% ]{chapter}
+% Optionaler Befehl zum editieren von dem margin top von Kapiteln
+
+%allgemeine Einstellungen
+\input{Einstellungen}
+
+\input{Glossar}
+
+\input{Abkuerzungen}
+
+\begin{document}
+
+\include{Kapitel/Titelseite}
+
+\preface
+%Ab hier Seitenzahlen mit Römischen Ziffern
+
+\listoftodos
+
+% auskommentieren, um den Sperrvermerk wegzulassen
+\include{Kapitel/Sperrvermerk}
+
+% auskommentieren, um den Abstract/Kurzzusammenfassung wegzulassen
+\include{Kapitel/Abstract}
+
+\tableofcontents
+%erstellt das vollautomatische Inhaltsverzeichnis
+
+\listoffigures
+%erstellt das Abbildungsverzeichnis
+
+\listoftables
+%erstellt das Tabellenverzeichnis
+
+\glsaddall[types=main]
+%Befehl, um alle Glossar Einträge ohne sie im body aufzurufen, auszugeben
+\printglossary[title=Glossar, type=\glsdefaulttype]
+%erstellt das Glossar
+
+\printglossary[type=\acronymtype, title=Abkürzungsverzeichnis, nonumberlist]
+%erstellt das Abkürzungsverzeichnis
+
+\newpage
+
+\body
+%ab hier Seitenzahlen in Arabischen Zahlen
+
+\include{Kapitel/01_Einleitung}
+\include{Kapitel/02_Stand.tex}
+\include{Kapitel/03_Methodik.tex}
+\include{Kapitel/04_Untersuchung.tex}
+\include{Kapitel/05_Ergebnisse.tex}
+\include{Kapitel/06_Fazit.tex}
+
+\pagenumbering{Roman}
+
+\printbibliography
+%erstellt das Literaturverzeichnis
+
+\include{Kapitel/A1_KI}
+\include{Kapitel/A2_Erklaerung}
+
+
+\end{document}
+%beendet das Dokument
+
