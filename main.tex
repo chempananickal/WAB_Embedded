@@ -1,11 +1,11 @@
-% Vorlage für WABs der Provadis Hochschule
-% basiert auf "Universität Ulm Praktikumsbericht Vorlage"
-% von Max Sch.
+% Template for Provadis Hochschule scientific works
+% Based on "University of Ulm Internship Report Template"
+% by Max Sch.
 % CC BY 4.0
 %
 % main.tex
 %
-% Das ist das zentrale Dokument.
+% This is the central document.
 
 
 %persönliche Infos
@@ -25,8 +25,7 @@
 	abstract=true,
 	headsepline=true,
 	footsepline=true,
-	headings=big,
-	hyphenzone=1.25cm
+	headings=big
 	]{scrreprt}
 %Startet das Dokument und regelt gleichzeitig Formatierungen wie Schriftgröße, Papierformat, Zahlenart, Sprache usw.
 % 12pt - die Standardschriftgröße
@@ -39,7 +38,7 @@
 % ]{chapter}
 % Optionaler Befehl zum editieren von dem margin top von Kapiteln
 
-%allgemeine Einstellungen
+%General settings
 \input{Einstellungen}
 
 \input{Glossar}
@@ -51,37 +50,37 @@
 \include{Kapitel/Titelseite}
 
 \preface
-%Ab hier Seitenzahlen mit Römischen Ziffern
+%From here page numbers with Roman numerals
 
 \listoftodos
 
-% auskommentieren, um den Sperrvermerk wegzulassen
-\include{Kapitel/Sperrvermerk}
+% comment out to remove the confidentiality notice
+% \include{Kapitel/Sperrvermerk}
 
-% auskommentieren, um den Abstract/Kurzzusammenfassung wegzulassen
+% comment out to remove the abstract/summary
 \include{Kapitel/Abstract}
 
 \tableofcontents
-%erstellt das vollautomatische Inhaltsverzeichnis
+%creates the automatic table of contents
 
 \listoffigures
-%erstellt das Abbildungsverzeichnis
+%creates the list of figures
 
 \listoftables
-%erstellt das Tabellenverzeichnis
+%creates the list of tables
 
 \glsaddall[types=main]
-%Befehl, um alle Glossar Einträge ohne sie im body aufzurufen, auszugeben
-\printglossary[title=Glossar, type=\glsdefaulttype]
-%erstellt das Glossar
+%Command to display all glossary entries without calling them in the body
+\printglossary[title=Glossary, type=\glsdefaulttype]
+%creates the glossary
 
-\printglossary[type=\acronymtype, title=Abkürzungsverzeichnis, nonumberlist]
-%erstellt das Abkürzungsverzeichnis
+\printglossary[type=\acronymtype, title=Abbreviations, nonumberlist]
+%creates the abbreviations list
 
 \newpage
 
 \body
-%ab hier Seitenzahlen in Arabischen Zahlen
+%from here page numbers in Arabic numerals
 
 \include{Kapitel/01_Einleitung}
 \include{Kapitel/02_Stand.tex}
@@ -93,7 +92,7 @@
 \pagenumbering{Roman}
 
 \printbibliography
-%erstellt das Literaturverzeichnis
+%creates the bibliography
 
 \include{Kapitel/A1_KI}
 \include{Kapitel/A2_Erklaerung}

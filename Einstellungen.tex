@@ -1,85 +1,85 @@
-% Vorlage für WABs der Provadis Hochschule
-% basiert auf "Universität Ulm Praktikumsbericht Vorlage"
-% von Max Sch.
+% Template for Provadis University scientific works
+% Based on "University of Ulm Internship Report Template"
+% by Max Sch.
 % CC BY 4.0
 %
 % Einstellungen.tex
 %
-% Hier werden allgemeine Einstellungen festgelegt.
+% General settings are defined here.
 
-%Packages sind Erweiterungen des eigentlichen Programms und erleichtern Abläufe, Darstellungen, Formatierungen usw.
-%Im Folgenden sind die Packages installiert, welche ich zum erstellen einer Bachelorarbeit einmal benötigt wurden.
-%Es kann beliebig erweitert/reduziert werden.
+%Packages are extensions of the actual program and facilitate workflows, representations, formatting etc.
+%The following packages have been installed once for creating a bachelor thesis.
+%They can be expanded/reduced as needed.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Times New Roman Alternative, pdflatex-kompatibel
+% Times New Roman Alternative, pdflatex compatible
 \usepackage{newtxtext}
 
-% Paket für Times Schrift
+% Package for Times font
 %\usepackage{mathptmx}
 
-\usepackage[ngerman]{babel}
-% Paket für Deutsche Sprache (Übersetzungen von Chapter zu Kapitel,
-% richtige Umlaute, richtige % Silbentrennung)
-% siehe auch http://de.wikipedia.org/wiki/Babel-System
+\usepackage[english]{babel}
+% Package for English language (translations from Chapter to Chapter,
+% correct umlauts, correct hyphenation)
+% see also http://en.wikipedia.org/wiki/Babel-System
 
 \usepackage{titling}
-%Hilft im Dokument auf den deklarierten Autor und Titel zuzugreifen
+%Helps access the declared author and title in the document
 
 \usepackage[style=numeric-comp,backend=biber,doi=false,isbn=false,maxnames=3,sorting=none]{biblatex}
 \usepackage{csquotes}
 \addbibresource{Referenzen.bib}
-%Regelt die Erstellung des Literaturverzeichnisses sowie die Zitation im gesamten Bericht
-%Greift gleichzeitig auf die Referenzen.bib genannte BibTex datei zu, in welcher die Quellen aufgeführt sind.
+%Controls the creation of the bibliography and citation throughout the report
+%At the same time accesses the Referenzen.bib file containing the sources.
 
 \usepackage{url}
-%erzeugt schönere URLs (vorallem in den Quellen wichtig)
+%creates nicer URLs (especially important in sources)
 
 \usepackage{float}
-%Hilft beim Anordnen von Bildern, Grafiken und Tabellen
+%Helps arrange images, graphics and tables
 
 %\usepackage{abstract}
-%ermöglicht das einfügen eines Abstract (Nicht relevant fürs Praktikum)
+%allows inserting an abstract (not relevant for internship)
 
 \usepackage{booktabs}
-%ermöglicht das erstellen von schöneren Tabellen
+%enables creation of nicer tables
 
 \usepackage{subfigure}
-%lässt den Benutzer mehrere Grafiken/Bilder in einer Abbildung darstellen
+%allows the user to display multiple graphics/images in one figure
 
 \usepackage{setspace}
-% Paket um den Zeilenabstand zu ändern
+% Package to change line spacing
 \onehalfspacing
-% Zeilenabstand auf 1,5-fach setzen
+% Set line spacing to 1.5-fold
 
 \usepackage{pdfpages}
-%ermöglicht das einbinden von eigenständigen PDF Dokumenten
+%enables embedding of independent PDF documents
 
 \usepackage{siunitx}
-\sisetup{locale = DE}
-%vereinfacht den benötigten Syntax zum Benutzen von SI Einheiten und Mathematischen Gleichungen mit dem deutschen Standart
+\sisetup{locale = US}
+%simplifies the required syntax for using SI units and mathematical equations with the international standard
 
 \usepackage{tikz}
-%Freies Anordnen von Bildern und Text in Relation zueinander, sowie Möglichkeiten Bilder zu bearbeiten
-%Verfügt auserdem über die Möglichkeit Grafiken und Diagramme in Latex zu erstellen
+%Free arrangement of images and text in relation to each other, as well as possibilities to edit images
+%Also has the ability to create graphics and diagrams in Latex
 
 \usepackage[format=plain,labelfont=bf]{caption}
-\captionsetup[table]{position=above}
-%verschönert die Abbildungs- und Tabellenbeschriftungen. Für Tabellen werden die Beschriftungen über der Tabelle angezeigt
+\captionsetup{position=above}
+%beautifies figure and table captions. For tables, captions are displayed above the table
 
 \usepackage{icomma}
-%Für den korrekten Abstand der Kommas in Dezimalzahlen und in Gleichungen
+%For correct spacing of commas in decimal numbers and in equations
 
 \usepackage{amsmath}
-%elementares Paket für Gleichungen. Verschönert diese und erleichtert die Benutzung von Gleichungen.
+%elementary package for equations. Beautifies them and facilitates the use of equations.
 
 \usepackage{graphicx}
-%mehr Optionen beim Einbinden und anordnen von Bildern und Grafiken
+%more options when embedding and arranging images and graphics
 
 \usepackage{setspace}
-%Für den richtigen Zeilenabstand
+%For correct line spacing
 %%% HJP 31/3/25
 \newlength\dist
 \setlength\dist{-\topskip}
@@ -90,18 +90,18 @@
 %%%
 
 \usepackage[left=3cm,right=2cm,top=3cm, bottom=3cm]{geometry}
-%Regelt die Seitenabstände
-%Muss ggf. bei beidseitigem Layout angepasst werden.
+%Controls page margins
+%May need to be adjusted for double-sided layout.
 
 \usepackage{enumitem}
 
 \usepackage[hidelinks]{hyperref}
-% Generische Links
+% Generic links
 
 \usepackage[acronym, toc]{glossaries}
 
 \renewcommand*{\glspostdescription}{}
-%Entfernt die Nummerierung im Abkürzungsverzeichnis
+%Removes numbering in the abbreviations list
 
 \usepackage{listings}
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -127,7 +127,7 @@
 }
 
 \usepackage{todonotes}
-% Kann mit disable komplett ausgeschaltet werden
+% Can be completely disabled with disable
 %\usepackage[disable]{todonotes}
 \setuptodonotes{fancyline}
 \todototoc
@@ -166,7 +166,7 @@
 
 \def\abstract{
     \begin{center}{
-        \large\bfseries Kurzzusammenfassung}
+        \large\bfseries Abstract}
     \end{center}
     \normalsize
     \normalfont
@@ -179,7 +179,7 @@
 \newenvironment{acknowledgements}{
    \cleardoublepage
     \begin{center}{
-        \large \bf Danksagung}
+        \large \bf Acknowledgements}
     \end{center}
     \normalsize
     \linespread{1.5}
