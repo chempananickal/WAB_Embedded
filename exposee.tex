@@ -55,15 +55,43 @@
 
 \section*{Problem Statement}
 \addcontentsline{toc}{section}{Problem Statement}
+The accurate prediction of \gls{logp} is crucial in various fields, including drug discovery and environmental chemistry. 
+Traditional computational methods for \gls{logp} prediction can be resource-intensive and may not be suitable for deployment on low-power embedded systems. 
+This project aims to explore the feasibility of implementing machine learning-based \gls{logp} prediction on an \gls{esp32} microcontroller, which is widely used in \gls{iot} applications.
 
 \section*{Objectives}
 \addcontentsline{toc}{section}{Objectives}
+The primary objectives of this project are:
+\begin{itemize}
+    \item To develop a machine learning model for \gls{logp} prediction using a suitable dataset.
+    \item To optimize the model for deployment on an \gls{esp32} microcontroller, considering constraints such as memory and computational power.
+    \item To evaluate the performance of the implemented model in terms of accuracy and efficiency.
+\end{itemize}
 
 \section*{Methodology}
 \addcontentsline{toc}{section}{Methodology}
+The project will follow these steps:
+\begin{enumerate}
+    \item Data Collection: Gather a dataset of chemical compounds with known \gls{logp} values. The ZINC20 database will be used as a primary source for this data.
+    \item Model Development: Train a machine learning model (e.g., Random Forest, Support Vector Machine) using the collected dataset and the \gls{tflite} framework for microcontroller deployment.
+    \item Model Optimization: Use techniques such as quantization and pruning to reduce the model size for deployment on the \gls{esp32}.
+    \item Implementation: Deploy the optimized model on the \gls{esp32} microcontroller and develop an interface for inputting chemical compound data.
+    \item Evaluation: Assess the model's performance using metrics such as mean absolute error (MAE) and inference time on the \gls{esp32}.
+\end{enumerate}
 
 \section*{Planned Structure}
 \addcontentsline{toc}{section}{Planned Structure}
+The paper will likely be structured as follows:
+\begin{itemize}
+    \item Introduction
+    \item Literature Review
+    \item Methodology
+    \item Results and Discussion
+    \item Conclusion and Future Work
+    \item References
+    \item AI Declaration
+    \item Declaration of Authorship
+\end{itemize}
 
 \cleardoublepage
 
