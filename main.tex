@@ -1,103 +1,68 @@
-% Template for Provadis Hochschule scientific works
-% Based on "University of Ulm Internship Report Template"
-% by Max Sch.
-% CC BY 4.0
-%
-% main.tex
-%
-% This is the central document.
+\input{info}
 
+\documentclass[12pt,a4paper,twoside]{scrreprt}
 
-%persönliche Infos
-\input{Berichtinfos}
-
-\documentclass[
-	a4paper,
-	ngerman,
-	12pt,	% 12pt für Times, 11pt für Arial und 10pt für Verdana
-	bibliography=totoc,
-	listof=totoc,
-	numbers=noendperiod,
-	openany,
-	twoside,
-	headinclude=false,
-	titlepage=firstiscover,
-	abstract=true,
-	headsepline=true,
-	footsepline=true,
-	headings=big
-	]{scrreprt}
-%Startet das Dokument und regelt gleichzeitig Formatierungen wie Schriftgröße, Papierformat, Zahlenart, Sprache usw.
-% 12pt - die Standardschriftgröße
-% openany - Kapitel dürfen auch auf der "Rückseite" starten, Leerseiten werden vermieden
-% parskip=full - Leerzeilen zwischen Absätzen statt Einrückung
-% twoside - Rückseiten werden mit bedruckt, Seitenzahlen und Binderände werden entsprechen angepasst; Alternative: oneside
-
-% \RedeclareSectionCommand[
-%   beforeskip=-32pt
-% ]{chapter}
-% Optionaler Befehl zum editieren von dem margin top von Kapiteln
-
-%General settings
-\input{Einstellungen}
-
-\input{Glossar}
-
-\input{Abkuerzungen}
+\input{settings}
+\input{glossary}
+\input{abbreviations}
 
 \begin{document}
+\selectlanguage{english}
 
-\include{Kapitel/Titelseite}
-
-\preface
-%From here page numbers with Roman numerals
-
-\listoftodos
-
-% comment out to remove the confidentiality notice
-% \include{Kapitel/Sperrvermerk}
-
-% comment out to remove the abstract/summary
-\include{Kapitel/Abstract}
-
-\tableofcontents
-%creates the automatic table of contents
-
-\listoffigures
-%creates the list of figures
-
-\listoftables
-%creates the list of tables
-
-\glsaddall[types=main]
-%Command to display all glossary entries without calling them in the body
-\printglossary[title=Glossary, type=\glsdefaulttype]
-%creates the glossary
-
-\printglossary[type=\acronymtype, title=Abbreviations, nonumberlist]
-%creates the abbreviations list
-
-\newpage
-
-\body
-%from here page numbers in Arabic numerals
-
-\include{Kapitel/01_Einleitung}
-\include{Kapitel/02_Stand.tex}
-\include{Kapitel/03_Methodik.tex}
-\include{Kapitel/04_Untersuchung.tex}
-\include{Kapitel/05_Ergebnisse.tex}
-\include{Kapitel/06_Fazit.tex}
-
+% Front matter in Roman numerals
 \pagenumbering{Roman}
 
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{flushright}
+\includegraphics[height=2.5cm]{Images/Cover/provadis-hochschule.pdf}
+\end{flushright}
+\vspace{1cm}
+\centering
+{\Large \textbf{WAB} \par}
+\vspace{0.5cm}
+{\Large \UniversityName \par}
+\vspace{1cm}
+{\LARGE \textbf{\ThesisTitle} \par}
+\vspace{0.5cm}
+{\Large \ThesisSubtitle \par}
+\vspace{2cm}
+{\large \AuthorName \par}
+{\large \AuthorEmail \par}
+\vspace{2cm}
+{\large Department: \DepartmentName \par}
+{\large Module: \ModuleName \par}
+{\large Reviewer: \ReviewerName \par}
+\vfill
+{\large \SubmissionDate \par}
+\end{titlepage}
+
+\include{Chapters/Abstract}
+
+\tableofcontents
+
+\listoffigures
+\listoftables
+
+% Glossary and abbreviations in front matter
+\glsaddall
+\printglossary[title=Glossary]
+\printglossary[type=\acronymtype,title=Abbreviations,nonumberlist]
+
+\cleardoublepage
+
+% Main content in Arabic numerals
+\pagenumbering{arabic}
+\include{Chapters/01_Introduction}
+\include{Chapters/02_Methods}
+
+\cleardoublepage
+
+% Back matter in roman numerals
+\pagenumbering{roman}
+
 \printbibliography
-%creates the bibliography
 
-\include{Kapitel/A1_KI}
-\include{Kapitel/A2_Erklaerung}
-
+\include{Chapters/AI_Declaration}
 
 \end{document}
-%beendet das Dokument
-
