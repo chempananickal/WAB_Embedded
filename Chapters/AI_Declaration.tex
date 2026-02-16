@@ -3,20 +3,31 @@
 
 The usage of AI tools within this project is documented here. I solemnly declare that I have documented all interactions with AI tools, including the prompts used and the outputs received.
 
-\begin{table*}[h]
-    \renewcommand{\arraystretch}{1.5}
-    \centering
-    \begin{tabular}{p{0.15\textwidth} p{0.55\textwidth} p{0.25\textwidth}}
-        \toprule
-        System & Prompt & Usage \\
-        \midrule
-        ChatGPT 1 & Asked to delete the existing project and provide a simple LaTeX template with a shared preamble, a Chapters subdirectory, TOC, glossary, abbreviations, and Roman numerals for non-content pages. & Template structure and LaTeX setup provided \\
-        ChatGPT 2 & Requested additional title page lines (WAB header, reviewer, module) for the main document. & Title page metadata and layout updated \\
-        ChatGPT 3 & Requested uppercase Roman numerals for front matter and lowercase Roman numerals for back matter page numbering. & Page numbering adjusted in main and exposee \\
-        ChatGPT 4 & Requested exposee title page to include shared info fields (WAB header, department, module, reviewer). & Exposee title page updated to include shared metadata \\
-        ChatGPT 5 & Requested adding the provadis-hochschule.pdf logo to the top right corner of both main and exposee title pages. & Logo added to top right of both title pages \\
-        ChatGPT 6 & Reported that Glossary and Abbreviations sections were missing from compiled output. & Added example \texttt{\textbackslash newacronym} entries to abbreviations.tex so the Abbreviations section displays properly \\
-        ChatGPT 7 & Reported that glossary section still not appearing in final PDF. & Updated settings.tex to include \texttt{automake} option in glossaries package to enable automatic glossary generation \\
-        \bottomrule
-    \end{tabular}
-\end{table*}
+\renewcommand{\arraystretch}{1.5}
+\begin{longtable}{p{0.15\textwidth} p{0.55\textwidth} p{0.25\textwidth}}
+    \toprule
+    System & Prompt & Usage \\
+    \midrule
+    \endfirsthead
+    \toprule
+    System & Prompt & Usage \\
+    \midrule
+    \endhead
+    \midrule
+    \endfoot
+    \bottomrule
+    \endlastfoot
+    GitHub Copilot 1 & Asked to delete the existing project and provide a simple LaTeX template with a shared preamble, a Chapters subdirectory, TOC, glossary, abbreviations, and Roman numerals for non-content pages. & Template structure and LaTeX setup provided \\
+    GitHub Copilot 2 & Requested additional title page lines (WAB header, reviewer, module) for the main document. & Title page metadata and layout updated \\
+    GitHub Copilot 3 & Requested uppercase Roman numerals for front matter and lowercase Roman numerals for back matter page numbering. & Page numbering adjusted in main and exposee \\
+    GitHub Copilot 4 & Requested exposee title page to include shared info fields (WAB header, department, module, reviewer). & Exposee title page updated to include shared metadata \\
+    GitHub Copilot 5 & Requested adding the provadis-hochschule.pdf logo to the top right corner of both main and exposee title pages. & Logo added to top right of both title pages \\
+    GitHub Copilot 6 & Reported that Glossary and Abbreviations sections were missing from compiled output. & Added example \texttt{\textbackslash newacronym} entries to abbreviations.tex so the Abbreviations section displays properly \\
+    GitHub Copilot 7 & Reported that glossary section still not appearing in final PDF. & Updated settings.tex to include \texttt{automake} option in glossaries package to enable automatic glossary generation \\
+    GitHub Copilot 8 & Asked for boilerplate to train a TFLite model for ESP32 to estimate logP from SMILES. & Provided a Python training script (RDKit + Keras) with TFLite export \\
+    GitHub Copilot 9 & Asked how to run inference on an ESP32 with the trained model. & Provided a high-level TFLite Micro deployment workflow for ESP32 \\
+    GitHub Copilot 10 & Asked for a beginner-friendly README in Code/ with step-by-step setup and usage. & Added a novice-oriented Code/README.md with installation, training, and ESP32 notes \\
+    GitHub Copilot 11 & Asked for a TFLite Micro skeleton and beginner ESP32 setup steps. & Added Code/tflite\_micro\_skeleton.cpp and expanded Code/README.md with ESP32 instructions \\
+    GitHub Copilot 12 & Reported the TFLite Micro skeleton was incomplete. & Completed the skeleton with quantized support, Arduino setup, and a runnable loop \\
+    GitHub Copilot 13 & Asked to avoid Roman-numbered pages in glossary references. & Explained how \texttt{\textbackslash glsaddall} affects page references \\
+\end{longtable}

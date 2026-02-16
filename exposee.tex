@@ -1,6 +1,6 @@
 \input{info}
 
-\documentclass[12pt,a4paper,twoside]{scrreprt}
+\documentclass[12pt,a4paper,twoside,open=any]{scrreprt}
 
 \input{settings}
 \input{glossary}
@@ -42,16 +42,14 @@
 \tableofcontents
 
 % Glossary and abbreviations in front matter
-\glsaddall
 \printglossary[title=Glossary]
-\printglossary[type=\acronymtype,title=Abbreviations,nonumberlist]
-
-\cleardoublepage
+% \printglossary[type=\acronymtype,title=Abbreviations,nonumberlist]
 
 % Exposee content in Arabic numerals
-\pagenumbering{arabic}
+\clearpage
 \chapter*{Expos\'e}
 \addcontentsline{toc}{chapter}{Expos\'e}
+\pagenumbering{arabic}
 
 \section*{Problem Statement}
 \addcontentsline{toc}{section}{Problem Statement}
@@ -96,7 +94,7 @@ The paper will likely be structured as follows:
     \item Declaration of Authorship
 \end{itemize}
 
-\cleardoublepage
+\clearpage
 
 % Back matter in roman numerals
 \pagenumbering{roman}

@@ -1,6 +1,6 @@
 \input{info}
 
-\documentclass[12pt,a4paper,twoside]{scrreprt}
+\documentclass[12pt,a4paper,twoside,open=any]{scrreprt}
 
 \input{settings}
 \input{glossary}
@@ -45,18 +45,14 @@
 \listoftables
 
 % Glossary and abbreviations in front matter
-\glsaddall
 \printglossary[title=Glossary]
-\printglossary[type=\acronymtype,title=Abbreviations,nonumberlist]
-
-\cleardoublepage
+% \printglossary[type=\acronymtype,title=Abbreviations,nonumberlist]
+\clearpage
 
 % Main content in Arabic numerals
 \pagenumbering{arabic}
 \include{Chapters/01_Introduction}
 \include{Chapters/02_Methods}
-
-\cleardoublepage
 
 % Back matter in roman numerals
 \pagenumbering{roman}
