@@ -1,14 +1,16 @@
 // Minimal TFLite Micro inference skeleton for ESP32.
 // You must provide model_data.h (C array) and adjust tensor arena size.
 
+#include "tflite_micro_skeleton.h"
+
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
 #include <cmath>
+#include <cstring>
 
-#include "tensorflow/lite/micro/all_ops_resolver.h"
-#include "tensorflow/lite/micro/micro_error_reporter.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
+#include "tensorflow/lite/micro/micro_log.h"
+#include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/version.h"
 
@@ -20,8 +22,7 @@
 
 namespace {
 constexpr int kTensorArenaSize = 200 * 1024;
-constexpr size_t kInputSize = 2048;
-static uint8_t tensor_arena[kTensorArenaSize];
+alignas(16) static uint8_t tensor_arena[kTensorArenaSize];
 
 inline int8_t quantize_float(float value, float scale, int zero_point) {
     if (scale <= 0.0f) {
@@ -43,27 +44,31 @@ inline float dequantize_int8(int8_t value, float scale, int zero_point) {
 }
 }
 
-static tflite::ErrorReporter* reporter = nullptr;
 static const tflite::Model* model = nullptr;
 static tflite::MicroInterpreter* interpreter = nullptr;
 
-static bool init_model() {
-    static tflite::MicroErrorReporter micro_reporter;
-    reporter = &micro_reporter;
+namespace logp_inference {
 
+bool init_model() {
     model = tflite::GetModel(g_model_data);
     if (model->version() != TFLITE_SCHEMA_VERSION) {
-        reporter->Report("Model schema mismatch");
+        MicroPrintf("Model schema mismatch");
         return false;
     }
 
-    static tflite::AllOpsResolver resolver;
+    static tflite::MicroMutableOpResolver<1> resolver;
+    const TfLiteStatus add_status = resolver.AddFullyConnected();
+    if (add_status != kTfLiteOk) {
+        MicroPrintf("Failed to register FULLY_CONNECTED op");
+        return false;
+    }
+
     static tflite::MicroInterpreter static_interpreter(
-        model, resolver, tensor_arena, kTensorArenaSize, reporter);
+        model, resolver, tensor_arena, kTensorArenaSize);
     interpreter = &static_interpreter;
 
     if (interpreter->AllocateTensors() != kTfLiteOk) {
-        reporter->Report("AllocateTensors failed");
+        MicroPrintf("AllocateTensors failed");
         interpreter = nullptr;
         return false;
     }
@@ -71,8 +76,11 @@ static bool init_model() {
     return true;
 }
 
-static bool run_inference(const float* input, size_t input_len, float* output) {
+bool run_inference(const float* input, std::size_t input_len, float* output) {
     if (!interpreter) {
+        return false;
+    }
+    if (input == nullptr || output == nullptr) {
         return false;
     }
 
@@ -116,14 +124,16 @@ static bool run_inference(const float* input, size_t input_len, float* output) {
     return true;
 }
 
-#if defined(ARDUINO)
+}  // namespace logp_inference
+
+#if !defined(TFLITE_MICRO_UNIT_TEST) && defined(ARDUINO)
 
 void setup() {
     Serial.begin(115200);
     while (!Serial) {
         delay(10);
     }
-    if (!init_model()) {
+    if (!logp_inference::init_model()) {
         Serial.println("Model init failed");
     } else {
         Serial.println("Model init OK");
@@ -131,12 +141,13 @@ void setup() {
 }
 
 void loop() {
-    static float input_data[kInputSize] = {0.0f};
+    static float input_data[logp_inference::kInputSize] = {0.0f};
     float result = 0.0f;
 
     // Fill input_data with 2048 floats (Morgan fingerprint) from host or sensor.
     // This example uses zeros to prove the pipeline runs.
-    const bool ok = run_inference(input_data, kInputSize, &result);
+    const bool ok = logp_inference::run_inference(
+        input_data, logp_inference::kInputSize, &result);
     if (ok) {
         Serial.print("logP: ");
         Serial.println(result, 6);
@@ -147,15 +158,16 @@ void loop() {
     delay(2000);
 }
 
-#else
+#elif !defined(TFLITE_MICRO_UNIT_TEST)
 
 extern "C" void app_main(void) {
-    if (!init_model()) {
+    if (!logp_inference::init_model()) {
         return;
     }
-    static float input_data[kInputSize] = {0.0f};
+    static float input_data[logp_inference::kInputSize] = {0.0f};
     float result = 0.0f;
-    const bool ok = run_inference(input_data, kInputSize, &result);
+    const bool ok = logp_inference::run_inference(
+        input_data, logp_inference::kInputSize, &result);
     (void)ok;
     // Add your input acquisition and inference loop here.
 }

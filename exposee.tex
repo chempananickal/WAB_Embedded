@@ -1,9 +1,8 @@
-\input{info}
-
 \documentclass[12pt,a4paper,twoside,open=any]{scrreprt}
 
 \input{settings}
 \input{glossary}
+\input{info}
 \input{abbreviations}
 
 \begin{document}
@@ -26,13 +25,12 @@
 {\LARGE \textbf{Expos\'e} \par}
 \vspace{0.5cm}
 {\Large \textbf{\ThesisTitle} \par}
-\vspace{0.5cm}
 {\Large \ThesisSubtitle \par}
-\vspace{2cm}
+\vspace{1cm}
 {\large \AuthorName \par}
 {\large \AuthorEmail \par}
 {\large Matriculation Number: \MatriculationNumber \par}
-\vspace{1.5cm}
+\vspace{1cm}
 {\large Department: \DepartmentName \par}
 {\large Module: \ModuleName \par}
 {\large Reviewer: \ReviewerName \par}
@@ -44,6 +42,7 @@
 
 % Glossary and abbreviations in front matter
 \printglossary[title=Glossary]
+\addcontentsline{toc}{chapter}{Glossary}
 % \printglossary[type=\acronymtype,title=Abbreviations,nonumberlist]
 
 % Exposee content in Arabic numerals
@@ -54,10 +53,26 @@
 
 \section*{Problem Statement}
 \addcontentsline{toc}{section}{Problem Statement}
+
+LogP, or the logarithm of the octanol-water partition coefficient, is a key physicochemical property that describes the lipophilicity (ability to dissolve in fats, oils, and other non-polar solvents) of a compound. 
+It is defined as the ratio of the concentration of a compound in a mixture of two immiscible solvents (usually octanol and water) at equilibrium.
+The more lipophilic a compound is, the higher its \gls{logp} value, which can influence its absorption, distribution, metabolism, and excretion (ADME) properties in biological systems.
+
 The accurate prediction of \gls{logp} is crucial in various fields, including drug discovery and environmental chemistry. 
-Traditional computational methods for \gls{logp} prediction can be resource-intensive because the rely on storing large lists of fragments and their contributions to the overall \gls{logp} value. This can make it challenging to deploy such models on resource-constrained devices like microcontrollers.
+Traditional computational methods for \gls{logp} prediction can be resource-intensive because the rely on storing large lists of fragments and their contributions to the overall \gls{logp} value. 
+This can make it challenging to deploy such models on resource-constrained devices like microcontrollers.
 Other, even more accurate methods, such as those based on quantum chemistry calculations, are even more computationally expensive and thus not suitable for deployment on microcontrollers.
-This project aims to explore the feasibility of implementing machine learning-based \gls{logp} prediction on an \gls{esp32} microcontroller, which is widely used in \gls{iot} applications.
+This project aims to explore the feasibility of implementing machine learning-based \gls{logp} prediction (based on a molecule's \gls{fingerprint}) on an \gls{esp32} microcontroller, which is widely used in \gls{iot} applications.
+
+The reason for exploring the ability to predict \gls{logp} on a microcontroller is to enable real-time, on-site predictions in various applications, such as environmental monitoring or portable drug discovery tools.
+By offloading the prediction task away from a host computer and onto a microcontroller, one can potentially reduce latency in systems that require immediate response,
+such as a microfluidic dispensing device that needs to make decisions based on the \gls{logp} of a compound in real-time.
+
+Since the molecular \gls{fingerprint} is a bit vector that could be encoded as a \gls{qrcode}, the microcontroller could also be used in scenarios where a user can scan said code printed on the sample in a laboratory or field setting with a portable device and receive an immediate prediction of the \gls{logp} value,
+and if this approach seems feasible and accurate enough, it could be extended to predicting other properties as well, without needing to access a cloud-based service or a powerful computer.
+
+Also, by decoupling the \gls{fingerprint} generation (a deterministic process on canonical \gls{smiles} strings) and the prediction (a non-deterministic process owing to the nature of machine learning models),
+and by binding the prediction to a specific piece of hardware (a "black box", as it were), one can make the entire system more modular and easier to debug. As an added bonus, the host computer wouldn't need to have any machine learning libraries installed.
 
 \section*{Objectives}
 \addcontentsline{toc}{section}{Objectives}
@@ -73,7 +88,7 @@ The primary objectives of this project are:
 The project will follow these steps:
 \begin{enumerate}
     \item Data Collection: Gather a dataset of chemical compounds with known \gls{logp} values. The \gls{ZINC20} database will be used as a primary source for this data.
-    \item Model Development: Train a machine learning model (e.g., \gls{rf}, \gls{svm}) using the collected dataset and the \gls{tflite} framework for microcontroller deployment.
+    \item Model Development: Train a machine learning model (e.g., \gls{rf}, \gls{svm}, Neural Network) using the dataset and the \gls{tflite} framework for microcontroller deployment.
     \item Model Optimization: Use techniques such as quantization and pruning to reduce the model size for deployment on the \gls{esp32}.
     \item Implementation: Deploy the optimized model on the \gls{esp32} microcontroller and develop an interface for inputting chemical compound data.
     \item Evaluation: Assess the model's performance using metrics such as mean absolute error (MAE) and inference time on the \gls{esp32}.
@@ -93,6 +108,16 @@ The paper will likely be structured as follows:
     \item References
     \item AI Declaration
     \item Declaration of Authorship
+\end{itemize}
+
+\section*{Projected Timeline}
+\addcontentsline{toc}{section}{Projected Timeline}
+\begin{itemize}
+    \item 2026-03-02: Expos\'e submission
+    \item 2026-03-10: Literature review completion
+    \item 2026-03-15: Data collection and preprocessing
+    \item 2026-03-17: Model development, training, and deployment on \gls{esp32}
+    \item 2026-03-31: Submission of the final paper
 \end{itemize}
 
 \clearpage

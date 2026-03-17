@@ -1,4 +1,8 @@
 {
-    "latex-workshop.latex.clean.method": "glob",
-    "latex-workshop.latex.autoClean.run": "onBuilt"
+    "idf.currentSetup": "C:\\esp\\v5.5.3\\esp-idf",
+    "idf.openOcdConfigs": [
+        "interface/ftdi/esp32_devkitj_v1.cfg",
+        "target/esp32.cfg"
+    ],
+    "idf.flashType": "UART"
 }

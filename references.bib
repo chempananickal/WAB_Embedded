@@ -39,3 +39,62 @@ author = {Juda Baikété and Alhadji Malloum and Jeanet Conradie},
 keywords = {Machine learning, LGradBoost, RF, RDKit and DFT},
 abstract = {Machine learning (ML) has become a powerful tool for predicting molecular physicochemical properties. It finds applications in various research and development sectors, such as materials science, pharmaceutical chemistry, and environmental science. However, systematic comparisons between different types of properties remain limited. In this study, we developed two structured datasets: a logP dataset containing 1117 molecules and a pKb dataset containing 1268 molecules. For logP, each molecule is represented by 623 molecular descriptors generated exclusively by RDKit/Mordred, while a combination of 150 quantum chemistry descriptors from DFT calculations and molecular fingerprints derived from RDKit is used for pKb. Several ML algorithms were evaluated using an identical workflow, and the relevance of the descriptors was analyzed using SHAP, followed by feature pruning based on correlation. For the logP dataset, the LightGradBoost model achieved an R2 of 0.94, an RMSE of 0.31, and an MAE of 0.42 on the independent test set, accurately reproducing experimental logP values in the range of −11.6 to 1.58. For pKb prediction, Random Forest (RF) proved most accurate, with an MAE of 1.69 and an RMSE of 1.68, with predicted values covering the entire range of experimental pKb values (−37 to 29.2). Our results indicate that, while RDKit/Mordred descriptors can predict logP with high accuracy, pKb remains a more challenging property to model, even when incorporating high-level DFT descriptors. The study therefore proposes a unified framework for the comparative evaluation of cross-property machine learning models and highlights the influence of the type of descriptor and the choice of algorithm on performance for chemically distinct properties.}
 }
+@article{mm-pbsa-logp,
+author = {Sun, Yuchen and Hou, Tingjun and He, Xibing and Man, Viet Hoang and Wang, Junmei},
+title = {Development and test of highly accurate endpoint free energy methods. 2: Prediction of logarithm of n-octanol-water partition coefficient (logP) for druglike molecules using MM-PBSA method},
+journal = {Journal of Computational Chemistry},
+volume = {44},
+number = {13},
+pages = {1300-1311},
+keywords = {ABCG2, GAFF2, logP, MM-GBSA, MM-PBSA, transfer free energy},
+doi = {https://doi.org/10.1002/jcc.27086},
+url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.27086},
+eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1002/jcc.27086},
+abstract = {Abstract The logarithm of n-octanol-water partition coefficient (logP) is frequently used as an indicator of lipophilicity in drug discovery, which has substantial impacts on the absorption, distribution, metabolism, excretion, and toxicity of a drug candidate. Considering that the experimental measurement of the property is costly and time-consuming, it is of great importance to develop reliable prediction models for logP. In this study, we developed a transfer free energy-based logP prediction model-FElogP. FElogP is based on the simple principle that logP is determined by the free energy change of transferring a molecule from water to n-octanol. The underlying physical method to calculate transfer free energy is the molecular mechanics-Poisson Boltzmann surface area (MM-PBSA), thus this method is named as free energy-based logP (FElogP). The superiority of FElogP model was validated by a large set of 707 structurally diverse molecules in the ZINC database for which the measurement was of high quality. Encouragingly, FElogP outperformed several commonly-used QSPR or machine learning-based logP models, as well as some continuum solvation model-based methods. The root-mean-square error (RMSE) and Pearson correlation coefficient (R) between the predicted and measured values are 0.91 log units and 0.71, respectively, while the runner-up, the logP model implemented in OpenBabel had an RMSE of 1.13 log units and R of 0.67. Given the fact that FElogP was not parameterized against experimental logP directly, its excellent performance is likely to be expanded to arbitrary organic molecules covered by the general AMBER force fields.},
+year = {2023}
+}
+
+@article{logp-tox,
+title = {Physiochemical drug properties associated with in vivo toxicological outcomes},
+journal = {Bioorganic \& Medicinal Chemistry Letters},
+volume = {18},
+number = {17},
+pages = {4872-4875},
+year = {2008},
+issn = {0960-894X},
+doi = {https://doi.org/10.1016/j.bmcl.2008.07.071},
+url = {https://www.sciencedirect.com/science/article/pii/S0960894X08008500},
+author = {Jason D. Hughes and Julian Blagg and David A. Price and Simon Bailey and Gary A. DeCrescenzo and Rajesh V. Devraj and Edmund Ellsworth and Yvette M. Fobian and Michael E. Gibbs and Richard W. Gilles and Nigel Greene and Enoch Huang and Teresa Krieger-Burke and Jens Loesel and Travis Wager and Larry Whiteley and Yao Zhang},
+keywords = {Toxicity, Polar surface area, log, Adverse events},
+abstract = {Relationships between physicochemical drug properties and toxicity were inferred from a data set consisting of animal in vivo toleration (IVT) studies on 245 preclinical Pfizer compounds; an increased likelihood of toxic events was found for less polar, more lipophilic compounds. This trend held across a wide range of types of toxicity and across a broad swath of chemical space.}
+}
+
+@article{logp-range,
+title = {Defining optimum lipophilicity and molecular weight ranges for drug candidates—Molecular weight dependent lower logD limits based on permeability},
+journal = {Bioorganic \& Medicinal Chemistry Letters},
+volume = {19},
+number = {10},
+pages = {2844-2851},
+year = {2009},
+issn = {0960-894X},
+doi = {https://doi.org/10.1016/j.bmcl.2009.03.109},
+url = {https://www.sciencedirect.com/science/article/pii/S0960894X09004144},
+author = {Michael J. Waring},
+keywords = {Permeability},
+abstract = {Analysis of a large, structurally diverse Caco-2 permeability dataset using a variety of statistical techniques suggests that logD and molecular weight are the most important factors in determining the permeability of drug candidates. The limit for logD is shown to be dependent on molecular weight. These limits are shown to be potentially superior to current guidelines in increasing the chances of finding highly permeable compounds. When combined with suggested upper limits for lipophilicity suggested in the literature based on the avoidance of toxicology and other adverse effects, this helps define a lipophilicity range that is optimum for drug candidates.}
+}
+
+@article{logp-rf,
+author = {Ognichenko, Liudmyla N. and Kuz'min, Victor E. and Gorb, Leonid and Hill, Frances C. and Artemenko, Anatoly G. and Polischuk, Pavel G. and Leszczynski, Jerzy},
+title = {QSPR Prediction of Lipophilicity for Organic Compounds Using Random Forest Technique on the Basis of Simplex Representation of Molecular Structure},
+journal = {Molecular Informatics},
+volume = {31},
+number = {3-4},
+pages = {273-280},
+keywords = {2D QSPR, Lipophilicity, Simplex representation, Random Forest},
+doi = {https://doi.org/10.1002/minf.201100102},
+url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/minf.201100102},
+eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1002/minf.201100102},
+abstract = {Abstract The relationship between the octanol-water partition coefficient for more than twelve thousand organic compounds and their structures was investigated using a QSPR approach based on Simplex Representation of Molecular Structure (SiRMS). The dataset used in our study included 10973 compounds with experimental values of lipophilicity (LogKow) for different chemical compounds. Random Forest (RF) method was used for statistical modeling at the 2D level of representation of molecular structure. Developed models are adequate and successfully validated with external test sets. Proposed models have clear interpretation due to the use of simplex representation of molecular structure and predict the LogKow values with the accuracy of the best modern models. Thus QSPR models proposed in this study represent powerful and easy-to use virtual screening tool that can be recommended for prediction of octanol-water partition coefficient.},
+year = {2012}
+}
