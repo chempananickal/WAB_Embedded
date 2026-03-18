@@ -13,13 +13,13 @@ OUT_H = Path(__file__).parent / "artifacts" / "logp_model_tflite.h"
 
 def to_c_array(name: str, data: bytes) -> str:
     lines = []
-    lines.append(f"unsigned char {name}[] = {{")
+    lines.append(f"const unsigned char {name}[] = {{")
     hex_bytes = [f"0x{b:02x}" for b in data]
     # wrap columns at 12 entries
     for i in range(0, len(hex_bytes), 12):
         lines.append("    " + ", ".join(hex_bytes[i:i+12]) + ("," if i+12 < len(hex_bytes) else ""))
     lines.append("};")
-    lines.append(f"unsigned int {name}_len = {len(data)};")
+    lines.append(f"const unsigned int {name}_len = {len(data)};")
     return "\n".join(lines)
 
 def main():
@@ -41,8 +41,8 @@ def main():
     h.append("")
     h.append("#include <stdint.h>")
     h.append("")
-    h.append(f"extern unsigned char {varname}[];")
-    h.append(f"extern unsigned int {varname}_len;")
+    h.append(f"extern const unsigned char {varname}[];")
+    h.append(f"extern const unsigned int {varname}_len;")
     h_text = "\n".join(h) + "\n"
 
     OUT_CC.write_text(cc_text)

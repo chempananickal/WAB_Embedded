@@ -1,0 +1,2 @@
+total_samples,successful_samples,failed_samples,success_rate_percent,mae,rmse,median_absolute_error,max_absolute_error,mean_smape_percent,r_squared,pearson_r,within_0_25_percent,within_0_50_percent,within_1_00_percent,mean_inference_us,p95_inference_us,mean_round_trip_ms,p95_round_trip_ms
+1000,1000,0,100.0,0.171991,0.23524,0.12808,1.448398,14.196632,0.973149,0.986694,78.4,95.8,99.7,53040.044,53043.0,237.415,237.821

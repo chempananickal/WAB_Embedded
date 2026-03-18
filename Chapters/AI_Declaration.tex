@@ -32,5 +32,8 @@ The usage of AI tools within this project is documented here. I solemnly declare
     GitHub Copilot 12 & Reported the TFLite Micro skeleton was incomplete. & Completed the skeleton with quantized support, Arduino setup, and a runnable loop \\
     GitHub Copilot 13 & Asked to avoid Roman-numbered pages in glossary references. & Explained how \texttt{\textbackslash glsaddall} affects page references \\
     GitHub Copilot 14 & Asked to replace \texttt{iterrows} in the dataset loader with a better pattern. & Replaced loop with \texttt{Series.map} + boolean mask + \texttt{np.stack} for vectorized fingerprint loading \\
+    GitHub Copilot 15 & Asked for help to deploy the quantized logP model onto an ESP32 with LiteRT. & Added a dedicated ESP-IDF project, a host-side Python serial script, and usage instructions for the ESP32 inference workflow \\
+    GitHub Copilot 16 & Reported a serial port permission error while running the host SMILES sender against COM4. & Improved the Python script to catch serial open failures and print practical guidance about closing other serial monitors or processes \\
+    GitHub Copilot 17 & Asked for a test pipeline that runs the dataset against the ESP32 logP model and produces charts & Added a resumable Python evaluation pipeline with subset selection modes, CSV summaries, and PDF plots \\
 \end{longtable}
 }

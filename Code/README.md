@@ -1,6 +1,6 @@
 # Code Folder README (Start Here)
 
-This folder contains the training code and example C++ files for running a logP model with TensorFlow Lite (TFLite). The steps below assume you are a total beginner and are using Windows.
+This folder contains the training code and example C++ files for running a logP model with LiteRT/TFLite. The steps below assume you are a total beginner and are using Windows.
 
 ## 1) Install Python
 
@@ -27,9 +27,9 @@ If PowerShell blocks scripts, run once:
 Run:
 
 - `python -m pip install --upgrade pip`
-- `python -m pip install rdkit-pypi tensorflow pandas numpy scikit-learn`
+- `python -m pip install rdkit-pypi torch litert-torch-nightly pandas numpy scikit-learn ai-edge-litert`
 
-## 4) Train and export the TFLite model
+## 4) Train and export the LiteRT/TFLite model
 
 Run:
 
@@ -42,7 +42,9 @@ Outputs:
 
 Notes:
 
-- To enable full int8 quantization (recommended for ESP32), edit `train_logp_tflite.py` and set `USE_INT8 = True`, then re-run the script.
+- The training script now uses PyTorch for training and `litert_torch` for `.tflite` export.
+- `USE_INT8 = False` is the simplest path for host-side validation.
+- `USE_INT8 = True` uses the documented PT2E quantization path and may require `torchao`.
 
 ## 5) Quick sanity check on your PC (optional)
 
@@ -134,3 +136,57 @@ On ESP32, compute that on a host PC and send the input over serial/Wi-Fi.
 - `tflite_test.cpp`: Placeholder C++ test file.
 - `tflite_micro_skeleton.cpp`: Minimal ESP32 TFLite Micro inference skeleton.
 - `Dataset/250k_rndm_zinc_drugs_clean_3.csv`: Training data.
+
+## 9) Actual ESP-IDF deployment path in this repo
+
+If you already have an ESP32 connected and want the real end-to-end setup in this repository, use these two files:
+
+- `esp32_logp/`: ESP-IDF project that runs the model on the ESP32.
+- `send_smiles_to_esp32.py`: Host Python script that computes the Morgan fingerprint with RDKit and talks to the board over serial.
+
+This is the intended flow:
+
+1. Build and flash `Code/esp32_logp` to the ESP32.
+2. Keep the board on `COM4`.
+3. Install `pyserial` on the PC if needed.
+4. Run:
+   - `python Code/send_smiles_to_esp32.py "CCO"`
+5. The script computes the 2048-bit Morgan fingerprint on your PC, sends it to the ESP32, waits for inference, and prints the predicted logP.
+
+## 10) Full ESP32 evaluation pipeline for the paper
+
+If you want to benchmark the flashed ESP32 against the dataset and export figures for the report, use:
+
+- `python Code/evaluate_esp32_logp_dataset.py --port COM4`
+
+What it does:
+
+- Loads `Dataset/250k_rndm_zinc_drugs_clean_3.csv`
+- Selects either the whole dataset or a representative subset
+- Sends each chosen compound fingerprint to the ESP32 over serial
+- Stores one row per compound in `Code/artifacts/esp32_dataset_eval/predictions.csv`
+- Resumes automatically if the run is interrupted
+- Exports summary tables as CSV
+- Exports paper-ready PDF charts for LaTeX inclusion
+
+Main outputs:
+
+- `Code/artifacts/esp32_dataset_eval/summary_metrics.csv`
+- `Code/artifacts/esp32_dataset_eval/error_bands.csv`
+- `Code/artifacts/esp32_dataset_eval/worst_cases.csv`
+- `Code/artifacts/esp32_dataset_eval/figures/scatter_actual_vs_predicted.pdf`
+- `Code/artifacts/esp32_dataset_eval/figures/absolute_error_histogram.pdf`
+- `Code/artifacts/esp32_dataset_eval/figures/residuals_vs_actual.pdf`
+- `Code/artifacts/esp32_dataset_eval/figures/inference_time_histogram.pdf`
+- `Code/artifacts/esp32_dataset_eval/figures/cumulative_mae.pdf`
+
+Useful options:
+
+- `--selection-strategy stratified_logp --sample-size 1000` for a representative validation subset
+- `--selection-strategy extremes --sample-size 400` to stress-test low/high logP compounds
+- `--selection-strategy latency --sample-size 200` for a timing-focused run
+- `--selection-strategy random --sample-size 1000` for a simple Monte Carlo style subset
+- `--selection-strategy full` if you really want to run everything
+- `--max-samples 100` to cap a selected subset further
+- `--overwrite` to start from scratch instead of resuming
+- `--skip-run` to rebuild charts and tables from an existing `predictions.csv`
