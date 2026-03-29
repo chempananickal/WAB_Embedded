@@ -16,7 +16,7 @@ namespace {
 constexpr size_t kFingerprintBits = 2048;
 constexpr size_t kCommandPrefixLength = 3;
 constexpr size_t kLineBufferSize = kCommandPrefixLength + kFingerprintBits + 4;
-constexpr size_t kTensorArenaSize = 64 * 1024;
+constexpr size_t kTensorArenaSize = 128 * 1024;
 
 alignas(16) uint8_t tensor_arena[kTensorArenaSize];
 
@@ -37,9 +37,14 @@ bool InitializeModel() {
         return false;
     }
 
-    static tflite::MicroMutableOpResolver<1> resolver;
+    static tflite::MicroMutableOpResolver<2> resolver;
     if (resolver.AddFullyConnected() != kTfLiteOk) {
         std::printf("ERROR add_fully_connected_failed\n");
+        std::fflush(stdout);
+        return false;
+    }
+    if (resolver.AddDequantize() != kTfLiteOk) {
+        std::printf("ERROR add_dequantize_failed\n");
         std::fflush(stdout);
         return false;
     }
@@ -62,8 +67,8 @@ bool InitializeModel() {
         return false;
     }
 
-    if (input_tensor->type != kTfLiteInt8 || output_tensor->type != kTfLiteInt8) {
-        std::printf("ERROR expected_int8_io input=%d output=%d\n", input_tensor->type, output_tensor->type);
+    if (input_tensor->type != kTfLiteInt8 || output_tensor->type != kTfLiteFloat32) {
+        std::printf("ERROR expected_int8_input_float32_output input=%d output=%d\n", input_tensor->type, output_tensor->type);
         std::fflush(stdout);
         return false;
     }
@@ -83,11 +88,9 @@ bool InitializeModel() {
     }
 
     std::printf(
-        "READY input_scale=%.9f input_zero_point=%ld output_scale=%.9f output_zero_point=%ld\n",
+        "READY input_scale=%.9f input_zero_point=%ld\n",
         static_cast<double>(input_tensor->params.scale),
-        static_cast<long>(input_tensor->params.zero_point),
-        static_cast<double>(output_tensor->params.scale),
-        static_cast<long>(output_tensor->params.zero_point));
+        static_cast<long>(input_tensor->params.zero_point));
     std::fflush(stdout);
     return true;
 }
@@ -165,10 +168,7 @@ void HandleFingerprintCommand(const char* payload) {
     }
     const int64_t elapsed_us = esp_timer_get_time() - start_us;
 
-    const int8_t quantized_output = output_tensor->data.int8[0];
-    const float prediction =
-        (static_cast<float>(quantized_output) - static_cast<float>(output_tensor->params.zero_point)) *
-        output_tensor->params.scale;
+    const float prediction = output_tensor->data.f[0];
 
     std::printf("RESULT %.6f %lld\n", static_cast<double>(prediction), static_cast<long long>(elapsed_us));
     std::fflush(stdout);

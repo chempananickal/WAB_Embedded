@@ -14,13 +14,14 @@ Dependencies:
     numpy
     matplotlib
     pyserial
-    rdkit-pypi or rdkit
+    rdkit
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import datetime
 import math
 import time
 from pathlib import Path
@@ -44,11 +45,24 @@ from send_smiles_to_esp32 import (
 )
 
 
-DATA_PATH = Path(__file__).parent / "Dataset" / "250k_rndm_zinc_drugs_clean_3.csv"
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+
+DATA_DIR = Path(__file__).parent / "Dataset"
+DATA_PATH = DATA_DIR / "250k_rndm_zinc_drugs_clean_3.csv"
+DEFAULT_TEST_SPLIT_PATH = DATA_DIR / "test_set.csv"
 DEFAULT_OUTPUT_DIR = Path(__file__).parent / "Results"
+
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
 PLOT_SAMPLE_SIZE = 20_000
 WORST_CASE_COUNT = 20
 DEFAULT_SAMPLE_SIZE = 1000
+MAX_RETRIES = 100
 
 PREDICTIONS_HEADER = [
     "sample_index",
@@ -66,42 +80,15 @@ PREDICTIONS_HEADER = [
 ]
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", type=Path, default=DATA_PATH, help="CSV file with at least smiles and logP columns")
-    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="Directory for raw results, tables, and figures")
-    parser.add_argument("--port", default=DEFAULT_PORT, help="Serial port of the ESP32")
-    parser.add_argument("--baudrate", type=int, default=DEFAULT_BAUDRATE, help="Serial baudrate")
-    parser.add_argument("--boot-wait", type=float, default=2.0, help="Seconds to wait after opening the serial port")
-    parser.add_argument("--timeout", type=float, default=10.0, help="Seconds to wait for ESP32 replies")
-    parser.add_argument("--max-samples", type=int, default=None, help="Optional limit applied after subset selection")
-    parser.add_argument(
-        "--selection-strategy",
-        choices=["full", "random", "stratified_logp", "extremes", "latency"],
-        default="stratified_logp",
-        help="How to choose compounds for evaluation when the full dataset is too slow",
-    )
-    parser.add_argument(
-        "--sample-size",
-        type=int,
-        default=DEFAULT_SAMPLE_SIZE,
-        help="Target subset size for non-full selection strategies",
-    )
-    parser.add_argument("--skip-run", action="store_true", help="Skip serial evaluation and only rebuild tables/figures from predictions.csv")
-    parser.add_argument("--overwrite", action="store_true", help="Delete any existing predictions.csv instead of resuming")
-    return parser.parse_args()
+# ---------------------------------------------------------------------------
+# Dataset
+# ---------------------------------------------------------------------------
 
-
-def ensure_output_layout(output_dir: Path) -> dict[str, Path]:
-    figures_dir = output_dir / "figures"
-    figures_dir.mkdir(parents=True, exist_ok=True)
-    return {
-        "predictions": output_dir / "predictions.csv",
-        "summary_csv": output_dir / "summary_metrics.csv",
-        "bands_csv": output_dir / "error_bands.csv",
-        "worst_csv": output_dir / "worst_cases.csv",
-        "figures_dir": figures_dir,
-    }
+def resolve_default_dataset_path() -> Path:
+    """Prefer the exported held-out test split when it is available."""
+    if DEFAULT_TEST_SPLIT_PATH.exists():
+        return DEFAULT_TEST_SPLIT_PATH
+    return DATA_PATH
 
 
 def load_dataset(dataset_path: Path, max_samples: int | None) -> pd.DataFrame:
@@ -161,12 +148,20 @@ def select_dataset_subset(
     return selected.reset_index(drop=True)
 
 
+# ---------------------------------------------------------------------------
+# Serial evaluation
+# ---------------------------------------------------------------------------
+
 def load_completed_indices(predictions_path: Path) -> set[int]:
     if not predictions_path.exists():
         return set()
 
-    completed = pd.read_csv(predictions_path, usecols=["sample_index"])
-    return set(int(value) for value in completed["sample_index"].dropna().tolist())
+    completed = pd.read_csv(predictions_path, usecols=["sample_index", "status"])
+    # Only treat results that cannot improve on retry as done.
+    # device_error and timeout are retried on the next run.
+    terminal_statuses = {"ok", "invalid_smiles", "max_retries_exceeded"}
+    done = completed.loc[completed["status"].isin(terminal_statuses), "sample_index"]
+    return set(int(value) for value in done.dropna().tolist())
 
 
 def initialize_predictions_file(predictions_path: Path, overwrite: bool) -> None:
@@ -218,7 +213,31 @@ def evaluate_dataset(
 
             start_time = time.perf_counter()
             for item_number, row in enumerate(pending.itertuples(index=False), start=1):
-                error_message = ""
+                # Fingerprint computation is deterministic — invalid SMILES never recover.
+                try:
+                    bitstring = smiles_to_bitstring(row.smiles)
+                except ValueError as exc:
+                    append_prediction_row(
+                        predictions_path,
+                        {
+                            "sample_index": int(row.sample_index),
+                            "smiles": row.smiles,
+                            "actual_logp": float(row.actual_logp),
+                            "predicted_logp": math.nan,
+                            "signed_error": math.nan,
+                            "absolute_error": math.nan,
+                            "squared_error": math.nan,
+                            "smape_percent": math.nan,
+                            "inference_us": math.nan,
+                            "round_trip_ms": math.nan,
+                            "status": "invalid_smiles",
+                            "error_message": str(exc),
+                        },
+                    )
+                    continue
+
+                # Device inference — retry on hardware faults (stack overflow, mangled
+                # output, timeout) up to MAX_RETRIES times before giving up.
                 prediction_value = math.nan
                 signed_error = math.nan
                 absolute_error = math.nan
@@ -227,29 +246,36 @@ def evaluate_dataset(
                 inference_us = math.nan
                 round_trip_ms = math.nan
                 status = "ok"
+                error_message = ""
 
-                try:
-                    bitstring = smiles_to_bitstring(row.smiles)
-                    request_start = time.perf_counter()
-                    prediction_value, inference_us = request_prediction(
-                        connection,
-                        bitstring,
-                        timeout_seconds=timeout,
-                    )
-                    round_trip_ms = (time.perf_counter() - request_start) * 1000.0
-                    signed_error = float(prediction_value - row.actual_logp)
-                    absolute_error = abs(signed_error)
-                    squared_error = signed_error * signed_error
-                    smape_percent = compute_smape_percent(float(row.actual_logp), float(prediction_value))
-                except ValueError as exc:
-                    status = "invalid_smiles"
-                    error_message = str(exc)
-                except TimeoutError as exc:
-                    status = "timeout"
-                    error_message = str(exc)
-                except RuntimeError as exc:
-                    status = "device_error"
-                    error_message = str(exc)
+                for attempt in range(1, MAX_RETRIES + 1):
+                    try:
+                        request_start = time.perf_counter()
+                        prediction_value, inference_us = request_prediction(
+                            connection,
+                            bitstring,
+                            timeout_seconds=timeout,
+                        )
+                        round_trip_ms = (time.perf_counter() - request_start) * 1000.0
+                        signed_error = float(prediction_value - row.actual_logp)
+                        absolute_error = abs(signed_error)
+                        squared_error = signed_error * signed_error
+                        smape_percent = compute_smape_percent(float(row.actual_logp), float(prediction_value))
+                        if attempt > 1:
+                            print(f"\n  Recovered on attempt {attempt}.")
+                        break
+                    except (TimeoutError, RuntimeError) as exc:
+                        if attempt < MAX_RETRIES:
+                            print(f"\n  Attempt {attempt}/{MAX_RETRIES} failed ({exc}), retrying...")
+                            connection.reset_input_buffer()
+                            connection.reset_output_buffer()
+                            try:
+                                expect_pong(connection, timeout_seconds=timeout)
+                            except TimeoutError:
+                                pass
+                            continue
+                        status = "max_retries_exceeded"
+                        error_message = f"Failed after {MAX_RETRIES} attempts: {exc}"
 
                 append_prediction_row(
                     predictions_path,
@@ -269,17 +295,36 @@ def evaluate_dataset(
                     },
                 )
 
-                if item_number == 1 or item_number % 250 == 0:
-                    elapsed_seconds = time.perf_counter() - start_time
-                    processed_per_second = item_number / elapsed_seconds if elapsed_seconds > 0 else 0.0
-                    print(
-                        f"Processed {item_number}/{len(pending)} pending samples "
-                        f"({processed_per_second:.2f} samples/s)"
-                    )
+                elapsed_seconds = time.perf_counter() - start_time
+                rate = item_number / elapsed_seconds if elapsed_seconds > 0 else 0.0
+                remaining = (len(pending) - item_number) / rate if rate > 0 else float("inf")
+                eta = str(datetime.timedelta(seconds=int(remaining))) if remaining != float("inf") else "--"
+                print(
+                    f"\r  {item_number}/{len(pending)}  {rate:.2f} samples/s  ETA {eta}   ",
+                    end="",
+                    flush=True,
+                )
+        print()  # move past the \r line after the loop ends
     except SerialException as exc:
         raise RuntimeError(
             f"Could not use {port}: {exc}. Close any serial monitor and rerun with --port {port}."
         ) from exc
+
+
+# ---------------------------------------------------------------------------
+# Artifact generation
+# ---------------------------------------------------------------------------
+
+def ensure_output_layout(output_dir: Path) -> dict[str, Path]:
+    figures_dir = output_dir / "figures"
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    return {
+        "predictions": output_dir / "predictions.csv",
+        "summary_csv": output_dir / "summary_metrics.csv",
+        "bands_csv": output_dir / "error_bands.csv",
+        "worst_csv": output_dir / "worst_cases.csv",
+        "figures_dir": figures_dir,
+    }
 
 
 def save_summary_tables(valid_rows: pd.DataFrame, all_rows: pd.DataFrame, paths: dict[str, Path]) -> None:
@@ -431,12 +476,51 @@ def build_artifacts(predictions_path: Path, paths: dict[str, Path]) -> None:
     print(f"Saved tables and figures to {paths['figures_dir'].parent}")
 
 
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        default=resolve_default_dataset_path(),
+        help=(
+            "CSV file with at least smiles and logP columns; defaults to "
+            "Code/Dataset/test_set.csv when present, otherwise the full dataset"
+        ),
+    )
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="Directory for raw results, tables, and figures")
+    parser.add_argument("--port", default=DEFAULT_PORT, help="Serial port of the ESP32")
+    parser.add_argument("--baudrate", type=int, default=DEFAULT_BAUDRATE, help="Serial baudrate")
+    parser.add_argument("--boot-wait", type=float, default=2.0, help="Seconds to wait after opening the serial port")
+    parser.add_argument("--timeout", type=float, default=10.0, help="Seconds to wait for ESP32 replies")
+    parser.add_argument("--max-samples", type=int, default=None, help="Optional limit applied after subset selection")
+    parser.add_argument(
+        "--selection-strategy",
+        choices=["full", "random", "stratified_logp", "extremes", "latency"],
+        default="stratified_logp",
+        help="How to choose compounds for evaluation when the full dataset is too slow",
+    )
+    parser.add_argument(
+        "--sample-size",
+        type=int,
+        default=DEFAULT_SAMPLE_SIZE,
+        help="Target subset size for non-full selection strategies",
+    )
+    parser.add_argument("--skip-run", action="store_true", help="Skip serial evaluation and only rebuild tables/figures from predictions.csv")
+    parser.add_argument("--overwrite", action="store_true", help="Delete any existing predictions.csv instead of resuming")
+    return parser.parse_args()
+
+
 def main() -> int:
     args = parse_args()
     paths = ensure_output_layout(args.output_dir)
     initialize_predictions_file(paths["predictions"], overwrite=args.overwrite)
 
     if not args.skip_run:
+        print(f"Using dataset: {args.dataset}")
         full_dataset = load_dataset(args.dataset, max_samples=None)
         dataset = select_dataset_subset(
             dataset=full_dataset,

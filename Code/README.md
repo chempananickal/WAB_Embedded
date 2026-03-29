@@ -1,192 +1,258 @@
-# Code Folder README (Start Here)
+# Code Folder README
 
-This folder contains the training code and example C++ files for running a logP model with LiteRT/TFLite. The steps below assume you are a total beginner and are using Windows.
+This folder contains the full workflow for the logP model:
 
-## 1) Install Python
+1. Train and export a quantized LiteRT/TFLite model on the PC.
+2. Flash an ESP-IDF firmware project that runs that model on the ESP32.
+3. Use a Python script on the PC to turn SMILES into Morgan fingerprints.
+4. Send those fingerprints to the ESP32 over serial.
+5. Read the predicted logP back from the ESP32.
 
-1. Download Python 3.10 or newer from <https://www.python.org/downloads/> .
-2. During installation, check the box "Add Python to PATH".
-3. Open a new PowerShell window and verify:
-   - Run: `python --version`
+This README describes the real workflow used in this repository.
+The old Arduino-based instructions are no longer relevant.
 
-## 2) Create a virtual environment (recommended)
+## What matters most
 
-1. In PowerShell, go to this folder:
-   - `cd ~\WAB_Embedded\Code`
-2. Create a virtual environment:
-   - `python -m venv .venv`
-3. Activate it:
-   - `./.venv/Scripts/Activate.ps1`
+- ESP32 firmware project: `Code/esp32_logp`
+- Host sender script: `Code/send_smiles_to_esp32.py`
+- Training/export script: `Code/train_logp_tflite.py`
+- Model blob used by firmware: `Code/artifacts/logp_model_tflite.cc`
+- Model header used by firmware: `Code/artifacts/logp_model_tflite.h`
+- Dataset evaluation pipeline: `Code/evaluate_esp32_logp_dataset.py`
 
-If PowerShell blocks scripts, run once:
+## 1) Python environment on the PC
 
-- `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+Use the same environment for training, sending SMILES to the ESP32, and running the evaluation pipeline.
 
-## 3) Install Python dependencies
+Install the required Python packages:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install rdkit pandas numpy scikit-learn tensorflow ai-edge-litert pyserial matplotlib
+```
+
+If you use a dedicated environment, activate it before running any of the commands below.
+
+## 2) Train and export the model
 
 Run:
 
-- `python -m pip install --upgrade pip`
-- `python -m pip install rdkit-pypi torch litert-torch-nightly pandas numpy scikit-learn ai-edge-litert`
+```bash
+python Code/train_logp_tflite.py
+```
 
-## 4) Train and export the LiteRT/TFLite model
+What this does:
 
-Run:
+- Loads the SMILES/logP dataset.
+- Converts SMILES to 2048-bit Morgan fingerprints.
+- Trains a small Keras regression model.
+- Exports a fully int8-quantized `.tflite` model.
 
-- `python train_logp_tflite.py`
+Main output:
 
-Outputs:
+- `Code/artifacts/logp_model.tflite`
 
-- Model folder: `Code/artifacts/logp_model/`
-- TFLite file: `Code/artifacts/logp_model.tflite`
+Important:
 
-Notes:
+- The script is currently configured for `USE_INT8 = True`.
+- That is required for the ESP32 firmware in this repo. Without quantization, the model will not fit in the ESP32 memory.
 
-- The training script now uses PyTorch for training and `litert_torch` for `.tflite` export.
-- `USE_INT8 = False` is the simplest path for host-side validation.
-- `USE_INT8 = True` uses the documented PT2E quantization path and may require `torchao`.
+## 3) Convert the model to C source
 
-## 5) Quick sanity check on your PC (optional)
+If you retrain the model, regenerate the C array used by the firmware:
 
-You can test the TFLite model on your PC before moving to ESP32.
+```bash
+python Code/convert_tflite_to_c.py
+```
 
-1. Install the runtime:
-   - `python -m pip install tflite-runtime`
-2. Use a small Python test script to load the TFLite model and run inference.
+This updates:
 
-## 6) ESP32 inference overview
+- `Code/artifacts/logp_model_tflite.cc`
+- `Code/artifacts/logp_model_tflite.h`
 
-Important: The model expects a 2048-bit Morgan fingerprint as input. Computing that fingerprint requires RDKit, which is too heavy for ESP32. You have two options:
+If you do not retrain the model, you can keep the existing generated files.
 
-Option A (simplest):
+## 4) Build the ESP-IDF firmware
 
-- Compute the fingerprint on a PC and send the 2048 values to the ESP32 over serial/Wi-Fi.
+The actual ESP32 project is:
 
-Option B (fully on-device):
+- `Code/esp32_logp`
 
-- Change the input feature to something you can compute on the ESP32.
-- Retrain the model with that new feature.
+It uses Espressif's `esp-tflite-micro` component through `idf_component.yml`.
 
-If you want a minimal ESP32 inference example, see the TFLite Micro skeleton below.
+From the workspace root:
 
-## 7) ESP32 setup (beginner steps)
+```bash
+cd Code/esp32_logp
+idf.py set-target esp32
+idf.py build
+```
 
-These steps use the Arduino IDE because it is the simplest option for beginners.
+The first build will download the managed dependency automatically.
 
-### 7.1 Install the Arduino IDE
+## 5) Flash the ESP32 on COM4
 
-1. Download Arduino IDE 2.x from <https://www.arduino.cc/en/software>.
-2. Install it and launch the IDE.
+Flash the firmware to the board:
 
-### 7.2 Add ESP32 support
+```bash
+cd Code/esp32_logp
+idf.py -p COM4 flash
+```
 
-1. In Arduino IDE, open: File -> Preferences.
-2. In "Additional Boards Manager URLs", paste:
-   - <https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json>
-3. Click OK.
-4. Go to Tools -> Board -> Boards Manager.
-5. Search for "esp32" and install "esp32 by Espressif Systems".
+Optional: watch boot output once to confirm the firmware started correctly:
 
-### 7.3 Connect your ESP32
+```bash
+idf.py -p COM4 monitor
+```
 
-1. Plug the ESP32 into your PC using a USB cable (data-capable, not charge-only).
-2. Wait for Windows to install the USB driver.
-   - If it fails, install the CP210x or CH340 driver (depends on your board).
-3. In Arduino IDE, select your board:
-   - Tools -> Board -> ESP32 Arduino -> your ESP32 board (example: "ESP32 Dev Module").
-4. Select the COM port:
-   - Tools -> Port -> COMx.
+You should see a line that starts with `READY`.
 
-### 7.4 Add TFLite Micro
+Important:
 
-There are two common paths:
+- Close the serial monitor before using `send_smiles_to_esp32.py`.
+- Only one program can own `COM4` at a time.
 
-Option A (Arduino library):
+## 6) Run one prediction from the PC
 
-1. Open Sketch -> Include Library -> Manage Libraries.
-2. Search for "TensorFlowLite" and install the library by Arduino.
+After the firmware is flashed and running, go back to the workspace root and run:
 
-Option B (ESP-IDF component):
+```bash
+python Code/send_smiles_to_esp32.py "CCO"
+```
 
-- Use the ESP-IDF build system and add the TFLite Micro component.
-- This is more advanced; start with Option A if you are new.
+Or interactive mode:
 
-### 7.5 Prepare the model for firmware
+```bash
+python Code/send_smiles_to_esp32.py
+```
 
-1. Generate a C array from the TFLite file:
-   - `xxd -i .\artifacts\logp_model.tflite > model_data.h`
-2. Move `model_data.h` next to your Arduino sketch or project source.
-3. The generated array is named `logp_model_tflite`; rename it to `g_model_data`
-   (or update the skeleton to use the generated name).
+What the script does:
 
-### 7.6 Minimal TFLite Micro skeleton
+- Canonicalizes and cleans the SMILES.
+- Computes a 2048-bit Morgan fingerprint on the PC.
+- Opens `COM4`.
+- Sends the fingerprint to the ESP32.
+- Waits for the model result.
+- Prints the predicted logP and ESP32 inference time.
 
-See `tflite_micro_skeleton.cpp` in this folder. It shows:
+Example output:
 
-- How to load the model
-- How to allocate the tensor arena
-- How to call `Invoke()`
+```text
+Connecting to COM4 at 115200 baud...
+SMILES: CCO
+Canonical cleaned SMILES: CCO
+Predicted logP: 0.123456
+ESP32 inference time: 18432 us
+```
 
-You still need to provide the 2048-element input vector (Morgan fingerprint).
-On ESP32, compute that on a host PC and send the input over serial/Wi-Fi.
+## 7) Serial protocol used by the firmware
 
-## 8) Files in this folder
+The ESP32 firmware accepts simple line-based commands:
 
-- `train_logp_tflite.py`: Training script that exports a TFLite model.
-- `tflite_test.cpp`: Placeholder C++ test file.
-- `tflite_micro_skeleton.cpp`: Minimal ESP32 TFLite Micro inference skeleton.
-- `Dataset/250k_rndm_zinc_drugs_clean_3.csv`: Training data.
+- `PING`
+- `HELP`
+- `FP <2048 bits of 0 or 1>`
 
-## 9) Actual ESP-IDF deployment path in this repo
+The firmware replies with one of:
 
-If you already have an ESP32 connected and want the real end-to-end setup in this repository, use these two files:
+- `PONG`
+- `INFO ...`
+- `RESULT <predicted_logP> <inference_time_us>`
+- `ERROR ...`
 
-- `esp32_logp/`: ESP-IDF project that runs the model on the ESP32.
-- `send_smiles_to_esp32.py`: Host Python script that computes the Morgan fingerprint with RDKit and talks to the board over serial.
+You normally do not need to type these by hand because the Python script handles them.
 
-This is the intended flow:
+## 8) Quantization details
 
-1. Build and flash `Code/esp32_logp` to the ESP32.
-2. Keep the board on `COM4`.
-3. Install `pyserial` on the PC if needed.
-4. Run:
-   - `python Code/send_smiles_to_esp32.py "CCO"`
-5. The script computes the 2048-bit Morgan fingerprint on your PC, sends it to the ESP32, waits for inference, and prints the predicted logP.
+The deployed model uses int8 I/O.
 
-## 10) Full ESP32 evaluation pipeline for the paper
+Input mapping on the ESP32:
 
-If you want to benchmark the flashed ESP32 against the dataset and export figures for the report, use:
+- fingerprint bit `0` becomes `-128`
+- fingerprint bit `1` becomes `127`
 
-- `python Code/evaluate_esp32_logp_dataset.py --port COM4`
+The model metadata currently used by the firmware is:
 
-What it does:
+- input shape: `[1, 2048]`
+- input dtype: `int8`
+- output shape: `[1, 1]`
+- output dtype: `int8`
 
-- Loads `Dataset/250k_rndm_zinc_drugs_clean_3.csv`
-- Selects either the whole dataset or a representative subset
-- Sends each chosen compound fingerprint to the ESP32 over serial
-- Stores one row per compound in `Code/artifacts/esp32_dataset_eval/predictions.csv`
-- Resumes automatically if the run is interrupted
-- Exports summary tables as CSV
-- Exports paper-ready PDF charts for LaTeX inclusion
+## 9) Evaluate the ESP32 across the dataset
+
+To benchmark the flashed ESP32 against the dataset and generate CSV tables and figures, run:
+
+```bash
+python Code/evaluate_esp32_logp_dataset.py --port COM4
+```
+
+Default behavior:
+
+- Uses `Code/artifacts/test_set.csv` if it exists
+- Falls back to `Code/Dataset/250k_rndm_zinc_drugs_clean_3.csv` if no exported test split is available
+- Selects a representative subset by default
+- Sends each fingerprint to the ESP32 over serial
+- Stores predictions and metrics in `Code/Results`
+- Exports PDF plots for the report
 
 Main outputs:
 
-- `Code/artifacts/esp32_dataset_eval/summary_metrics.csv`
-- `Code/artifacts/esp32_dataset_eval/error_bands.csv`
-- `Code/artifacts/esp32_dataset_eval/worst_cases.csv`
-- `Code/artifacts/esp32_dataset_eval/figures/scatter_actual_vs_predicted.pdf`
-- `Code/artifacts/esp32_dataset_eval/figures/absolute_error_histogram.pdf`
-- `Code/artifacts/esp32_dataset_eval/figures/residuals_vs_actual.pdf`
-- `Code/artifacts/esp32_dataset_eval/figures/inference_time_histogram.pdf`
-- `Code/artifacts/esp32_dataset_eval/figures/cumulative_mae.pdf`
+- `Code/Results/predictions.csv`
+- `Code/Results/summary_metrics.csv`
+- `Code/Results/error_bands.csv`
+- `Code/Results/worst_cases.csv`
+- `Code/Results/figures/*.pdf`
 
-Useful options:
+Useful examples:
 
-- `--selection-strategy stratified_logp --sample-size 1000` for a representative validation subset
-- `--selection-strategy extremes --sample-size 400` to stress-test low/high logP compounds
-- `--selection-strategy latency --sample-size 200` for a timing-focused run
-- `--selection-strategy random --sample-size 1000` for a simple Monte Carlo style subset
-- `--selection-strategy full` if you really want to run everything
-- `--max-samples 100` to cap a selected subset further
-- `--overwrite` to start from scratch instead of resuming
-- `--skip-run` to rebuild charts and tables from an existing `predictions.csv`
+```bash
+python Code/evaluate_esp32_logp_dataset.py --port COM4 --selection-strategy stratified_logp --sample-size 1000
+python Code/evaluate_esp32_logp_dataset.py --port COM4 --selection-strategy extremes --sample-size 400
+python Code/evaluate_esp32_logp_dataset.py --port COM4 --selection-strategy random --sample-size 1000
+python Code/evaluate_esp32_logp_dataset.py --port COM4 --selection-strategy full
+python Code/evaluate_esp32_logp_dataset.py --port COM4 --dataset Code/artifacts/test_set.csv
+python Code/evaluate_esp32_logp_dataset.py --port COM4 --dataset Code/Dataset/250k_rndm_zinc_drugs_clean_3.csv
+python Code/evaluate_esp32_logp_dataset.py --port COM4 --skip-run
+```
+
+## 10) Common problems
+
+### `Access is denied` on `COM4`
+
+Another program already owns the serial port.
+
+Close things like:
+
+- `idf.py monitor`
+- VS Code serial monitor
+- Arduino Serial Monitor
+- PuTTY
+- another Python script using `COM4`
+
+Then rerun:
+
+```bash
+python Code/send_smiles_to_esp32.py "CCO"
+```
+
+### `ERROR allocate_tensors_failed`
+
+Increase `kTensorArenaSize` in `Code/esp32_logp/main/main.cc` and rebuild.
+
+### No response after opening the serial port
+
+Opening the port may reset the board. Wait a couple of seconds and try again. The sender script already does this automatically.
+
+### Invalid SMILES
+
+The sender script rejects invalid or uncleanable SMILES before anything is sent to the ESP32.
+
+## 11) File map
+
+- `Code/train_logp_tflite.py`: train and export the quantized model
+- `Code/convert_tflite_to_c.py`: convert `.tflite` model to C source/header
+- `Code/send_smiles_to_esp32.py`: send one SMILES to the ESP32 and print the result
+- `Code/evaluate_esp32_logp_dataset.py`: run many samples through the ESP32 and export metrics/plots
+- `Code/esp32_logp/`: ESP-IDF firmware project
+- `Code/artifacts/`: exported model files used by the firmware
+- `Code/Dataset/250k_rndm_zinc_drugs_clean_3.csv`: source dataset

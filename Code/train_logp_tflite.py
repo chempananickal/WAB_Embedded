@@ -1,12 +1,13 @@
-"""Train a minimal logP regressor and export a quantized model for LiteRT.
+"""Train a logP predictor and export a quantized model for LiteRT.
 
-Dependencies (pip): rdkit-pypi, tensorflow, pandas, numpy, scikit-learn,
-ai-edge-litert
+Dependencies (pip): rdkit, tensorflow, pandas, numpy, scikit-learn, ai-edge-litert
 """
 from __future__ import annotations
 
 from pathlib import Path
+import csv
 import os
+import random
 import time
 from typing import Iterable
 
@@ -20,10 +21,19 @@ import tensorflow as tf
 from mol_preprocessing import smiles_to_morgan_fingerprint
 
 
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
 
-DATA_PATH = Path(__file__).parent / "Dataset" / "250k_rndm_zinc_drugs_clean_3.csv"
+DATA_DIR = Path(__file__).parent / "Dataset"
+DATA_PATH = DATA_DIR / "250k_rndm_zinc_drugs_clean_3.csv"
 MODEL_DIR = Path(__file__).parent / "artifacts"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Hyperparameters
+# ---------------------------------------------------------------------------
 
 RANDOM_SEED = 42
 FP_BITS = 2048
@@ -31,19 +41,47 @@ FP_RADIUS = 2
 BATCH_SIZE = 256
 EPOCHS = 20
 TEST_FRACTION = 0.1
-USE_INT8 = True  # Full int8 quantization, required for ESP32
 VALIDATION_FRACTION = 0.1
+USE_INT8 = True  # Full int8 quantization, required for ESP32
 
 
-def load_dataset(csv_path: Path) -> tuple[np.ndarray, np.ndarray]:
-    """Load SMILES/logP pairs from CSV and return Morgan fingerprint matrix and labels."""
+# ---------------------------------------------------------------------------
+# Data
+# ---------------------------------------------------------------------------
+
+def _seed_everything(seed: int) -> None:
+    """Seed Python, NumPy, and TensorFlow so training is fully reproducible."""
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+
+
+def load_dataset(csv_path: Path) -> tuple[pd.DataFrame, np.ndarray, np.ndarray]:
+    """Load valid SMILES/logP rows and return the rows, fingerprints, and labels."""
     df = pd.read_csv(csv_path)
-    fps = df["smiles"].map(lambda s: smiles_to_morgan_fingerprint(s, FP_RADIUS, FP_BITS))
+    cleaned_smiles = df["smiles"].astype(str).str.strip()
+    fps = cleaned_smiles.map(lambda s: smiles_to_morgan_fingerprint(s, FP_RADIUS, FP_BITS))
     valid = fps.notna()
+    valid_df = df.loc[valid].copy().reset_index(names="source_index")
+    valid_df["smiles"] = cleaned_smiles.loc[valid].to_numpy()
     x = np.stack(fps[valid].to_numpy()).astype(np.float32)
-    y = df.loc[valid, "logP"].to_numpy(dtype=np.float32)
-    return x, y
+    y = valid_df["logP"].to_numpy(dtype=np.float32)
+    return valid_df, x, y
 
+
+def export_split_csvs(train_rows: pd.DataFrame, test_rows: pd.DataFrame) -> tuple[Path, Path]:
+    """Persist the exact train/test split used for model development."""
+    train_path = DATA_DIR / "training_set.csv"
+    test_path = DATA_DIR / "test_set.csv"
+    train_rows.to_csv(train_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
+    test_rows.to_csv(test_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
+    return train_path, test_path
+
+
+# ---------------------------------------------------------------------------
+# Model
+# ---------------------------------------------------------------------------
 
 def build_model(input_dim: int) -> tf.keras.Model:
     """Return a two-layer DNN that maps a fingerprint vector to a single logP value."""
@@ -72,25 +110,50 @@ def train_model(model: tf.keras.Model, x_train: np.ndarray, y_train: np.ndarray)
     return model
 
 
-def representative_dataset(x_train: np.ndarray) -> Iterable[list[np.ndarray]]:
-    """Yield 500 calibration samples for post-training quantization."""
-    for i in range(min(len(x_train), 500)):
+# ---------------------------------------------------------------------------
+# Quantization and export
+# ---------------------------------------------------------------------------
+
+def representative_dataset(x_train: np.ndarray, y_train: np.ndarray) -> Iterable[list[np.ndarray]]:
+    """Yield calibration samples that span the full logP range for accurate output quantization.
+
+    Naive sequential sampling risks missing extreme logP values, which causes the output
+    quantization scale to be calibrated to a narrow range and clamps predictions at the ceiling.
+    Sorting by logP and sampling evenly across the sorted order ensures the calibration set
+    covers the full output distribution.
+    """
+    n = min(len(x_train), 500)
+    indices = np.argsort(y_train)
+    step = max(1, len(indices) // n)
+    calibration_indices = indices[::step][:n]
+    for i in calibration_indices:
         yield [x_train[i : i + 1]]
 
 
-def convert_to_litert(model: tf.keras.Model, x_train: np.ndarray) -> bytes:
+def convert_to_litert(model: tf.keras.Model, x_train: np.ndarray, y_train: np.ndarray) -> bytes:
     """Convert a Keras model to a (optionally int8-quantized) TFLite flatbuffer."""
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
     if USE_INT8:
         converter.representative_dataset = tf.lite.RepresentativeDataset(
-            lambda: representative_dataset(x_train)
+            lambda: representative_dataset(x_train, y_train)
         )
         converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
         converter.inference_input_type = tf.int8
-        converter.inference_output_type = tf.int8
+        converter.inference_output_type = tf.float32  # float32 output avoids int8 clamping on the output tensor
     return converter.convert()
 
+
+def export_model(model: tf.keras.Model, x_train: np.ndarray, y_train: np.ndarray) -> Path:
+    """Serialize the quantized TFLite model to disk and return its path."""
+    model_path = MODEL_DIR / "logp_model.tflite"
+    model_path.write_bytes(convert_to_litert(model, x_train, y_train))
+    return model_path
+
+
+# ---------------------------------------------------------------------------
+# Evaluation
+# ---------------------------------------------------------------------------
 
 def _dequantize(tensor: np.ndarray, details: dict) -> np.ndarray:
     """Undo int8 quantization using the scale and zero-point stored in tensor details."""
@@ -141,15 +204,14 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
     return {"mae": mae, "rmse": rmse, "r2": r2, "within_half": within_half, "max_err": max_err}
 
 
-def export_model(model: tf.keras.Model, x_train: np.ndarray) -> Path:
-    """Serialize the quantized TFLite model to disk and return its path."""
-    model_path = MODEL_DIR / "logp_model.tflite"
-    model_path.write_bytes(convert_to_litert(model, x_train))
-    return model_path
-
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
 def print_results(
     model_path: Path,
+    train_csv_path: Path,
+    test_csv_path: Path,
     keras_mae: float,
     litert_metrics: dict[str, float],
     litert_ms: float,
@@ -157,6 +219,8 @@ def print_results(
     """Print a human-readable summary of training and LiteRT evaluation results."""
     m = litert_metrics
     print(f"\nSaved model to: {model_path}")
+    print(f"Saved training split to: {train_csv_path}")
+    print(f"Saved test split to: {test_csv_path}")
     print(f"\n--- Accuracy (on {int(100 * TEST_FRACTION)}% held-out test set) ---")
     print(f"  Average error (MAE):          {m['mae']:.3f} logP units  (Keras: {keras_mae:.3f})")
     print(f"  Typical error (RMSE):         {m['rmse']:.3f} logP units")
@@ -169,19 +233,21 @@ def print_results(
 
 def main() -> None:
     """Train a logP DNN, export it as a quantized TFLite model, and report accuracy."""
-    x, y = load_dataset(DATA_PATH)
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=TEST_FRACTION, random_state=RANDOM_SEED
+    _seed_everything(RANDOM_SEED)
+    rows, x, y = load_dataset(DATA_PATH)
+    train_rows, test_rows, x_train, x_test, y_train, y_test = train_test_split(
+        rows, x, y, test_size=TEST_FRACTION, random_state=RANDOM_SEED
     )
 
     model = train_model(build_model(FP_BITS), x_train, y_train)
     _, keras_mae = model.evaluate(x_test, y_test, verbose=0)
 
-    model_path = export_model(model, x_train)
+    train_csv_path, test_csv_path = export_split_csvs(train_rows, test_rows)
+    model_path = export_model(model, x_train, y_train)
     litert_preds, litert_ms = evaluate_litert(model_path, x_test)
     litert_metrics = compute_metrics(y_test, litert_preds)
 
-    print_results(model_path, keras_mae, litert_metrics, litert_ms)
+    print_results(model_path, train_csv_path, test_csv_path, keras_mae, litert_metrics, litert_ms)
 
 
 if __name__ == "__main__":
