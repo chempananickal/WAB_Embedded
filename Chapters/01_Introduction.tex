@@ -1,7 +1,49 @@
 \chapter{Introduction}
 
-% Write your introduction here.
-
 \section{Background}
 
-\section{Research Questions}
+The octanol-water partition coefficient (\gls{logp}) measures how well a compound dissolves in octanol versus water.
+It is a fundamental physicochemical property that quantifies the \gls{lipophilicity} of a molecule. 
+
+\begin{displaycquote}{mm-pbsa-logp}
+    The logarithm of partition coefficient (logP) between n-octanol and water is a critical property related to the physicochemical and physiological properties of a drug molecule, 
+    such as absorption, distribution, metabolism, excretion and toxicity (ADMET) and target protein binding \cite{HUGHES20084872,waring2009defining,gleeson2008generation,johnson2009using}.
+    Thus it is frequently used in describing the druggability of a pharmaceutical molecule. The first logP calculation method was developed by Fujita et al. in 1960s \cite{fujita1964new,iwasa1965substituent}. 
+    Early on, the structural information of receptor is not easy to obtain, medicinal chemists frequently used quantitative structure-activity relationship (QSAR) to correlate the binding energy of a ligand with its physicochemical characteristics, 
+    and logP was regarded as a key descriptor measuring a drug's hydrophobicity. 
+    Nowadays, Lipinski's rule of five \cite{lipinski2001polar,lipinski2004lead}, published in the 1990s, has been widely used as simple rules to determine the druglikeness of a pharmaceutical molecule. 
+    logP smaller than 5 is one of the four rules in Lipinski's rule of 5.
+\end{displaycquote}
+
+\section{Motivation}
+
+To date, there have been many computational methods developed to predict \gls{logp} values, including fragment based approaches \cite{fujita1964new} free energy based approaches \cite{mm-pbsa-logp}, 
+and recently, machine learning based approaches \cite{logp-rf,logp_ml}.
+
+The first two categories of methods are far too computationally intensive to be deployed on a microcontroller. 
+The machine learning based approaches could potentially be feasible, 
+if a neural network could be trained to predict \gls{logp} values and translated into a microcontroller compatible format using LiteRT \cite{litert} (formerly TensorFlow Lite).
+
+The reason for exploring the ability to predict \gls{logp} on a microcontroller is to enable real-time, on-site predictions in various applications, such as environmental monitoring or portable drug discovery tools.
+By offloading the prediction task away from a host computer and onto a microcontroller, one can potentially reduce latency in systems that require immediate response,
+such as a microfluidic dispensing device that needs to make decisions based on the \gls{logp} of a compound in real-time.
+
+Since the molecular \gls{fingerprint} is a bit vector that could be encoded as a \gls{qrcode} (see Figure \ref{fig:qr_code_example} for an example), the microcontroller could also be used in scenarios where a user can scan said code printed on the sample in a laboratory 
+or field setting with a portable device and receive an immediate prediction of the \gls{logp} value,
+and if this approach seems feasible and accurate enough, it could be extended to predicting other properties as well, without needing to access a cloud-based service or a powerful computer.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Code/Results/qr_codes/aspirin.png}
+    \caption{A QR Code encoding the ECFP4 fingerprint of aspirin.}
+    \label{fig:qr_code_example}
+\end{figure}
+
+Also, by decoupling the \gls{fingerprint} generation (a deterministic process on canonical \gls{smiles} strings) and the prediction (a non-deterministic process owing to the nature of machine learning models),
+and by binding the prediction to a specific piece of hardware (a "black box", as it were), one can make the entire system more modular and easier to debug. 
+As an added bonus, the host computer wouldn't need to have any machine learning libraries installed.
+
+\section{Research Question}
+
+The main research question of this project is:
+How accurately can a quantized machine learning model predict \gls{logp} values based on its ECFP4 \gls{fingerprint} when deployed on an \gls{esp32} microcontroller?

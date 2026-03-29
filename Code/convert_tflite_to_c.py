@@ -12,6 +12,10 @@ OUT_CC = Path(__file__).parent / "artifacts" / "logp_model_tflite.cc"
 OUT_H = Path(__file__).parent / "artifacts" / "logp_model_tflite.h"
 
 def to_c_array(name: str, data: bytes) -> str:
+    """
+    Convert bytes to a C array definition with the given variable name.
+    Emulates the style of xxd -i output, with 12 hex bytes per line and a separate length variable.
+    """
     lines = []
     lines.append(f"const unsigned char {name}[] = {{")
     hex_bytes = [f"0x{b:02x}" for b in data]

@@ -1,7 +1,28 @@
 \chapter{Methods}
 
-% Write your methods here.
+\section{Dataset}
+The base dataset used in this project is a subset of the \gls{ZINC20} dataset \cite{zinc}, which contains 249455 commercially available drug-like molecules and their corresponding \gls{logp} values.
+Specifically, this subset was extracted at random from the entire \gls{ZINC20} dataset by G\'omez-Bombarelli et al. \cite{zinc20source}.
+
+The \gls{logp} values within the \gls{ZINC20} dataset were calculated using Molinspiration's MiLogP algorithm, which calculates \gls{logp} based on group contributions \cite{molinspiration}.
+Due to the limited availability of large datasets of experimentally confirmed \gls{logp} values for drug-like molecules, and due to the limited scope of this project, 
+this computed \gls{logp} will be treated as the ground truth for the purposes of training and evaluating the machine learning model.
 
 \section{Design}
 
-\section{Data Collection}
+Python \cite{python} version 3.12.13 served as the primary programming language for this project. 
+The entire project was conducted on a laptop running Windows 11 25H2.
+
+The dataset was randomly split into training (80\%), validation (10\%), and test (10\%) sets, 
+with the random seed set to 42 to ensure reproducibility.
+
+The input features for the model are 2048-bit Morgan fingerprints (radius 2) generated from the \gls{smiles} representations of molecules. 
+The machine learning model is a feedforward \acrfull{dnn} with a single hidden layer of 128 units, using a \gls{relu} activation function, 
+followed by a linear output layer that predicts the \gls{logp} value.
+
+Keras \cite{keras} was used as the high-level API for building and training the neural network, while TensorFlow \cite{tensorflow} served as the backend.
+Model training was performed using the Adam optimizer and mean squared error (MSE) as the loss function. 
+Early stopping was employed to prevent overfitting, monitoring the validation loss and restoring the best weights.
+This meant that with the TensorFlow random seed set to 42, the training converged after 12 out of a maximum of 20 epochs, with a batch size of 256.
+
+For deployment on the \gls{esp32}, the trained model was quantized to int8 precision, while retaining float32 outputs.

@@ -1,0 +1,10 @@
+tensorflow
+numpy
+pandas
+scikit-learn
+rdkit
+qrcode
+opencv-python-headless
+matplotlib
+pyserial
+pillow

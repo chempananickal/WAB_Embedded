@@ -1,4 +1,5 @@
 % Shared LaTeX settings
+\usepackage{float}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[english,ngerman]{babel}
@@ -8,17 +9,40 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{longtable}
+\usepackage{url}
 \usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{rotate}
 \usepackage[acronym,automake]{glossaries}
-\usepackage[backend=bibtex,style=authoryear,autocite=footnote]{biblatex}
+% \usepackage[backend=bibtex,style=authoryear,autocite=footnote]{biblatex}
+\usepackage[backend=bibtex,style=numeric,sorting=none]{biblatex}
 
 \geometry{margin=1in}
 \setstretch{1.2}
 \hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=black}
 \setlength{\parskip}{1em}
 
+% Reduce space before/after chapter, section, and subsection headings
+\RedeclareSectionCommand[
+  beforeskip=1em,
+  afterskip=1em
+]{chapter}
+\RedeclareSectionCommand[
+  beforeskip=0.5em,
+  afterskip=0.5em
+]{section}
+\RedeclareSectionCommand[
+  beforeskip=0.5em,
+  afterskip=0.5em
+]{subsection}
+
 \addbibresource{references.bib}
 \makeglossaries
 
-% Make \cite produce footnotes
-\let\cite\footcite
+% Custom command for lowercase acronym long form
+\newcommand{\acrlonglc}[1]{\glslink{#1}{\MakeLowercase{\glsentrylong{#1}}}}
+
+% Make \cite produce superscript numeric citations.
+% \let\supercite\autocite
+\let\cite\supercite
