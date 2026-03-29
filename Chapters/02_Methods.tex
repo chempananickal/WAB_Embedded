@@ -28,7 +28,14 @@ $\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2$
 where $y_i$ is the true \gls{logp} value and $\hat{y}_i$ is the predicted \gls{logp} value for the $i$-th sample.
 
 Early stopping was employed to prevent overfitting, monitoring the validation loss and restoring the best weights.
-This meant that with a batch size of 256 and the TensorFlow random seed set to 42, the training converged after 12 out of a maximum of 20 epochs.
+This meant that with a batch size of 256 and the TensorFlow random seed set to 42, the training converged after 12 out of a maximum of 20 epochs (see Figure \ref{fig:training_history}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Code/Results/figures/history.pdf}
+    \caption{Training and validation loss and MAE curves over the 12 epochs.}
+    \label{fig:training_history}
+\end{figure}
 
 \section{ESP32 Deployment}
 
@@ -40,10 +47,10 @@ and the resulting .cc and .h files, along with an API script, were built and fla
 
 All the necessary code files, along with Visual Studio Code specific instructions for setting up the ESP-IDF environment, building the project, and flashing the firmware, can be found in the supplementary materials.
 
-ESP32 specifications:
+ESP32 specifications \cite{esp32spec}:
 \begin{itemize}
     \item Model: ESP32-WROOM-32D
-    \item CPU: Dual-core Tensilica LX6 microprocessor, up to 240 MHz
+    \item CPU: Dual-core Xtensa LX6 microprocessor, up to 240 MHz
     \item RAM: 520 KB SRAM
     \item Flash Storage: 4 MB
 \end{itemize}

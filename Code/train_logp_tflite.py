@@ -18,6 +18,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 
+# For plotting training history
+import matplotlib.pyplot as plt
+
 from mol_preprocessing import smiles_to_morgan_fingerprint
 
 
@@ -28,7 +31,9 @@ from mol_preprocessing import smiles_to_morgan_fingerprint
 DATA_DIR = Path(__file__).parent / "Dataset"
 DATA_PATH = DATA_DIR / "250k_rndm_zinc_drugs_clean_3.csv"
 MODEL_DIR = Path(__file__).parent / "artifacts"
+PLOT_DIR = Path(__file__).parent / "Results" / "figures"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
+PLOT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -99,7 +104,7 @@ def train_model(model: tf.keras.Model, x_train: np.ndarray, y_train: np.ndarray)
         loss="mse",
         metrics=["mae"],
     )
-    model.fit(
+    history = model.fit(
         x_train, y_train,
         validation_split=VALIDATION_FRACTION,
         epochs=EPOCHS,
@@ -107,7 +112,7 @@ def train_model(model: tf.keras.Model, x_train: np.ndarray, y_train: np.ndarray)
         callbacks=[tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)],
         verbose=2,
     )
-    return model
+    return model, history
 
 
 # ---------------------------------------------------------------------------
@@ -239,8 +244,12 @@ def main() -> None:
         rows, x, y, test_size=TEST_FRACTION, random_state=RANDOM_SEED
     )
 
-    model = train_model(build_model(FP_BITS), x_train, y_train)
+
+    model, history = train_model(build_model(FP_BITS), x_train, y_train)
     _, keras_mae = model.evaluate(x_test, y_test, verbose=0)
+
+    # Plot and save training history
+    save_training_history_plot(history)
 
     train_csv_path, test_csv_path = export_split_csvs(train_rows, test_rows)
     model_path = export_model(model, x_train, y_train)
@@ -248,6 +257,40 @@ def main() -> None:
     litert_metrics = compute_metrics(y_test, litert_preds)
 
     print_results(model_path, train_csv_path, test_csv_path, keras_mae, litert_metrics, litert_ms)
+
+
+# ---------------------------------------------------------------------------
+# Plotting
+# ---------------------------------------------------------------------------
+
+def save_training_history_plot(history):
+    """Save training and validation loss/MAE curves as a PDF in Results/figures/history.pdf."""
+
+    out_path = PLOT_DIR / "history.pdf"
+
+    hist = history.history
+    epochs = range(1, len(hist["loss"]) + 1)
+
+    plt.figure(figsize=(10, 5))
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, hist["loss"], label="Train loss")
+    plt.plot(epochs, hist["val_loss"], label="Val loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("MSE loss")
+    plt.title("Loss per epoch")
+    plt.legend()
+
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, hist["mae"], label="Train MAE")
+    plt.plot(epochs, hist["val_mae"], label="Val MAE")
+    plt.xlabel("Epoch")
+    plt.ylabel("MAE")
+    plt.title("MAE per epoch")
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(out_path)
+    plt.close()
 
 
 if __name__ == "__main__":
