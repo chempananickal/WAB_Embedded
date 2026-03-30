@@ -58,13 +58,13 @@ ESP32 specifications \cite{esp32spec}:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{Code/Results/figures/deploy.pdf}
+    \includegraphics[width=0.8\textwidth]{Code/Results/figures/deploy.pdf}
     \caption{Diagram showing the stages of canonicalization, fingerprint generation, neural network training, quantization, and ESP32 deployment.}
     \label{fig:deployment_workflow}
 \end{figure}
 
 The accuracy of the model was then tested on the test set of 24,946 compounds by running inference on the ESP32 and comparing the predicted \gls{logp} values against the ground truth.
-The measured performance metrics include mean absolute error (MAE), root mean squared error (RMSE), and the coefficient of determination ($R^2$).
+The measured performance metrics include mean absolute error (MAE), root mean squared error (RMSE), the coefficient of determination ($R^2$), and the Pearson correlation coefficient ($r$).
 \begin{equation}
     \mathrm{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|
 \end{equation}
@@ -74,5 +74,7 @@ The measured performance metrics include mean absolute error (MAE), root mean sq
 \begin{equation}
     R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
 \end{equation}
-where $n$ is the number of samples, $y_i$ is the true \gls{logp} value, $\hat{y}_i$ is the predicted \gls{logp} value, and $\bar{y}$ is the mean of the true \gls{logp} values.
-
+\begin{equation}
+    r = \frac{\sum_{i=1}^{n} (y_i - \bar{y})(\hat{y}_i - \bar{\hat{y}})}{\sqrt{\sum_{i=1}^{n} (y_i - \bar{y})^2 \sum_{i=1}^{n} (\hat{y}_i - \bar{\hat{y}})^2}}
+\end{equation}
+where $n$ is the number of samples, $y_i$ is the true \gls{logp} value, $\hat{y}_i$ is the predicted \gls{logp} value, $\bar{y}$ is the mean of the true \gls{logp} values, and $\bar{\hat{y}}$ is the mean of the predicted \gls{logp} values.
