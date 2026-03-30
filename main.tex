@@ -60,8 +60,11 @@
 
 % Back matter in roman numerals
 \pagenumbering{roman}
-
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{Bibliography}
 \printbibliography
+
 \include{Chapters/AI_Declaration}
 \include{Chapters/Declaration}
 

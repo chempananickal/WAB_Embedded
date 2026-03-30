@@ -1,7 +1,7 @@
 \chapter{Methods}
 
 \section{Dataset}
-The base dataset used in this project is a subset of the \gls{ZINC20} dataset \cite{zinc}, which contains 249455 commercially available drug-like molecules and their corresponding \gls{logp} values.
+The base dataset used in this project is a subset of the \gls{ZINC20} dataset \cite{zinc}, which contains 249,455 commercially available drug-like molecules and their corresponding \gls{logp} values.
 Specifically, this subset was extracted at random from the entire \gls{ZINC20} dataset by G\'omez-Bombarelli et al. \cite{zinc20source}.
 
 The \gls{logp} values within the \gls{ZINC20} dataset were calculated using Molinspiration's MiLogP algorithm, which calculates \gls{logp} based on group contributions \cite{molinspiration}.
@@ -19,12 +19,13 @@ with the random seed set to 42 to ensure reproducibility.
 The input features for the model are 2048-bit Morgan fingerprints (radius 2) generated from the \gls{smiles} representations of molecules. 
 The \gls{smiles} were canonicalized and the fingerprint bit vectors were generated using the RDKit \cite{rdkit} library in Python.
 
-The machine learning model is a feedforward \acrfull{dnn} with a single hidden layer of 128 units, using a \gls{relu} activation function, 
+The machine learning model is a \gls{mlp} with a single hidden layer of 128 units, using a \gls{relu} activation function, 
 followed by a linear output layer that predicts the \gls{logp} value.
 Keras \cite{keras} was used as the high-level API for building and training the neural network, while TensorFlow \cite{tensorflow} served as the backend.
-Model training was performed fully on the CPU using the Adam \cite{adam} optimizer and mean squared error (MSE) as the loss function. 
-
-$\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2$
+Model training was performed fully on the CPU using the \gls{adam} optimizer \cite{adam} and mean squared error (MSE) as the loss function. 
+\begin{equation}
+    \mathrm{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2
+\end{equation}
 where $y_i$ is the true \gls{logp} value and $\hat{y}_i$ is the predicted \gls{logp} value for the $i$-th sample.
 
 Early stopping was employed to prevent overfitting, monitoring the validation loss and restoring the best weights.
@@ -54,4 +55,24 @@ ESP32 specifications \cite{esp32spec}:
     \item RAM: 520 KB SRAM
     \item Flash Storage: 4 MB
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Code/Results/figures/deploy.pdf}
+    \caption{Workflow diagram showing the stages of canonicalization, fingerprint generation, neural network training, quantization, and ESP32 deployment.}
+    \label{fig:deployment_workflow}
+\end{figure}
+
+The accuracy of the model was then tested on the test set of 24,946 compounds by running inference on the ESP32 and comparing the predicted \gls{logp} values against the ground truth.
+The measured performance metrics include mean absolute error (MAE), root mean squared error (RMSE), and the coefficient of determination ($R^2$).
+\begin{equation}
+    \mathrm{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|
+\end{equation}
+\begin{equation}
+    \mathrm{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}
+\end{equation}
+\begin{equation}
+    R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
+\end{equation}
+where $n$ is the number of samples, $y_i$ is the true \gls{logp} value, $\hat{y}_i$ is the predicted \gls{logp} value, and $\bar{y}$ is the mean of the true \gls{logp} values.
 
