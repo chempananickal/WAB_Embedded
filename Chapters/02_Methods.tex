@@ -44,7 +44,7 @@ To reduce the model size, the final model was quantized to 8-bit integers using 
 The resulting flatbuffer was saved as a .tflite file.
 
 This .tflite file was then converted to a C array using a python tool that emulates the POSIX `xxd` command, 
-and the resulting .cc and .h files, along with an API script, were built and flashed onto an \gls{esp32} microcontroller using ESP-IDF version 5.5.3.
+and the resulting .cc and .h files, along with a C++ API script, were built and flashed onto an \gls{esp32} microcontroller using ESP-IDF version 5.5.3.
 
 All the necessary code files, along with Visual Studio Code specific instructions for setting up the ESP-IDF environment, building the project, and flashing the firmware, can be found in the supplementary materials.
 
