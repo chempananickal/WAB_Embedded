@@ -1,1 +1,10 @@
 \chapter{Conclusion}
+
+In conclusion, to answer the original research question, it seems that it is indeed possible to deploy a quantized machine learning model on an \gls{esp32} microcontroller to predict \gls{logp} values based on ECFP4 fingerprints with a high degree of accuracy.
+The proof-of-concept model achieved an \acrshort{mae} of 0.29, an \acrshort{rmse} of 0.39, and an $R^2$ value of 0.92 on the test set, which indicates that the predictions are closely aligned with the true values.
+
+The inference time of 53.13 milliseconds per compound suggests that the model is efficient enough for real-time applications, although the overall round trip time of 237.97 milliseconds indicates that there may be some overhead in the communication stages that could be optimized in future iterations.
+
+A notable shortcoming of the current model is that the dataset it was trained on was derived from the \gls{ZINC20} database of drug-like compounds, 
+and therefore, the predictions may not generalize well to non-drug-like molecules or ones with extreme \gls{lipophilicity} or \gls{hydrophilicity}.
+So, a potential future direction for this research would be to train and test a model on a more diverse dataset of compounds with experimentally determined \gls{logp} values.

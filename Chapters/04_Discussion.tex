@@ -1,1 +1,21 @@
 \chapter{Discussion}
+
+Out of the test set of 24,946 compounds, the \gls{esp32}-deployed model successfully predicted \gls{logp} values of 100\% of the samples. 
+The perfect prediction rate is due to the fact that the dataset was well-curated and contained only valid SMILES strings that lent themselves to canonicalization and fingerprint generation without errors. 
+Of note is the fact that the inference time is only 53.13 milliseconds per compound. This suggests that the reason the average round trip time took 237.97 milliseconds is probably not due to a bottleneck at the \gls{esp32} level.
+
+The high accuracy metrics reported in Table \ref{tab:performance_metrics} would indicate that it is reasonable to assume that the \gls{logp} values of a large number of drug-like compounds are highly correlated with their structural features,
+so much so that even a simple \gls{mlp} with a single hidden layer can learn to extrapolate these values with high precision.
+
+An interesting observation is the extremely inaccurate prediction of the \gls{logp} value of citrate (IUPAC name: 2-hydroxypropane-1,2,3-tricarboxylate, pictured in Figure \ref{fig:worst_case_molecule}), whose true \gls{logp} is -6.03 (extreme \gls{hydrophilicity}) but the predicted \gls{logp} was -1.09, resulting in an absolute error of \textbf{4.94}.
+This was by far the worst prediction in the entire test set, with the second worst only having an absolute error of \textbf{2.94} (See \path{Code/Results/worst_cases.csv} in the supplementary materials).
+What makes this case particularly noteworthy is that the predicted \gls{logp} value is closer to that of citrate's neutral form citric acid, which has a reported \gls{logp} of -1.72 \cite{citricacid}.
+
+\section{Limitations}
+
+The primary limitation of the model as it currently stands is that the highest \gls{logp} value it can predict is 5.30, as can be seen in the scatter plot in Figure \ref{fig:scatter_plot}.
+This is likely a consequence of the quantization process, which clamps the output to the range of representable values in the int8 format.
+Even though there were compounds in the training set with \gls{logp} values above 5.30, there were far too few of them (1384/224509, or 0.62\%) for the TFLite quantization algorithm to learn to represent them accurately.
+The entire dataset comprised of drug-like molecules, and in general, the \gls{logp} is unlikely to exceed this value according to Lipinski's rule of five \cite{lipinski2001polar}.
+So although this means the current model cannot predict the exact \gls{logp} of highly lipophilic compounds, it can still be useful to recognize and flag such compounds, 
+as they are unlikely to be orally bioavailable and would therefore make for poor drug candidates \cite{lipinski2004lead}.

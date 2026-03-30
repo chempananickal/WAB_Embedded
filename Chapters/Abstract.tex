@@ -1,9 +1,20 @@
 \chapter*{Abstract}
+
 \addcontentsline{toc}{chapter}{Abstract}
 
-% Write your abstract here.
+\section*{English}
+
+The octanol-water partition coefficient (logP) is a key property in drug discovery and is often predicted using computational methods.
+This project investigates whether a quantized machine learning model can accurately predict logP values from ECFP4 fingerprints when deployed on an \gls{esp32} microcontroller.
+A neural network (multi-layer perceptron) was trained on a large dataset of drug-like compounds, quantized, and deployed to the \gls{esp32}. Performance was evaluated on an independent 10\% test subset.
+The model achieved a mean absolute error of 0.29, RMSE of 0.39, and $R^2$ of 0.92. Inference time was 53 ms per compound.
+The results demonstrate that real-time, on-device logP prediction is feasible on embedded hardware, though generalization to non-drug-like molecules remains a limitation.
 
 
-\chapter*{Abstrakt}
+\section*{Deutsch}
 
-% German translation of the abstract goes here.
+Der Oktanol-Wasser-Verteilungskoeffizient (logP) ist eine wichtige Eigenschaft in der Arzneimittelforschung und wird häufig mithilfe von Rechenmethoden vorhergesagt.
+In diesem Projekt wird untersucht, ob ein quantisiertes Machine-Learning-Modell logP-Werte aus ECFP4-Fingerprints vorhersagen kann, wenn es auf einem \gls{esp32}-Mikrocontroller ausgerollt wird.
+Ein neuronales Netzwerk (Multi-Layer-Perzeptron) wurde auf einem großen Datensatz arzneimittelähnlicher Moleküle trainiert, quantisiert und auf den \gls{esp32} draufgespielt. Die Leistung wurde an einem unabhängigen 10\%-Testdatensatz bewertet.
+Das Modell erreichte einen MAE von 0{,}29, einen RMSE von 0{,}39 und ein $R^2$ von 0{,}92. Die Inferenzzeit betrug 53 ms pro Molekül.
+Die Ergebnisse zeigen, dass eine Echtzeit-Vorhersage von logP-Werten auf eingebetteter Hardware möglich ist. Die Generalisierbarkeit auf nicht-arzneimittelähnliche Moleküle bleibt jedoch eine Einschränkung.

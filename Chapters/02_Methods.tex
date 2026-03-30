@@ -16,7 +16,7 @@ The entire project was conducted on a laptop running Windows 11 25H2.
 The dataset was randomly split into training (80\%), validation (10\%), and test (10\%) sets, 
 with the random seed set to 42 to ensure reproducibility.
 
-The input features for the model are 2048-bit Morgan fingerprints (radius 2) generated from the \gls{smiles} representations of molecules. 
+The input features for the model are 2048-bit Morgan fingerprints with radius 2 (also known as \gls{ECFP4}) generated from the \gls{smiles} representations of molecules. 
 The \gls{smiles} were canonicalized and the fingerprint bit vectors were generated using the RDKit \cite{rdkit} library in Python.
 
 The machine learning model is a \gls{mlp} with a single hidden layer of 128 units, using a \gls{relu} activation function, 
@@ -64,7 +64,7 @@ ESP32 specifications \cite{esp32spec}:
 \end{figure}
 
 The accuracy of the model was then tested on the test set of 24,946 compounds by running inference on the ESP32 and comparing the predicted \gls{logp} values against the ground truth.
-The measured performance metrics include mean absolute error (MAE), root mean squared error (RMSE), the coefficient of determination ($R^2$), and the Pearson correlation coefficient ($r$).
+The measured performance metrics include mean absolute error (MAE), root mean squared error (RMSE), the coefficient of determination ($R^2$), and the Pearson correlation coefficient ($r$) \cite{pearson}.
 \begin{equation}
     \mathrm{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|
 \end{equation}
