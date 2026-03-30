@@ -23,7 +23,7 @@ free energy based calculations \cite{mm-pbsa-logp}, and more recently,
 employing machine learning based methods to predict \gls{logp} values based on a precomputed set of input features \cite{logp-rf,logp_ml,logp-prediction} .
 
 Fragment based \gls{logp} calculations involve having a lookup table of individual fragments, and a method of constructing a molecular graph and finding the fragments within it. 
-This requires a non-trivial amount of computational resources, and is therefore, infeasible to be implemented as a near real-time prediction method on a microcontroller.
+Both this and the free energy based calculations require a non-trivial amount of computational resources, and are therefore infeasible to be implemented as a near real-time prediction method on a microcontroller.
 
 The machine learning based approaches could potentially be feasible, 
 if a neural network could be trained to predict \gls{logp} values and translated into a microcontroller compatible format using LiteRT \cite{litert} (formerly TensorFlow Lite).
