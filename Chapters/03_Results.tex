@@ -1,5 +1,9 @@
 \chapter{Results}
 
+The trained model was successfully quantized and deployed on the ESP32 microcontroller, and inference was performed on the test set of 24,946 compounds.
+The performance metrics are summarized in Table \ref{tab:performance_metrics}, and the scatter plot of true vs. predicted \gls{logp} values is shown in Figure \ref{fig:scatter_plot}.
+The distribution of absolute errors is depicted in Figure \ref{fig:error_histogram}, and the molecule with the worst prediction error (citrate ion) is shown in Figure \ref{fig:worst_case_molecule}.
+
 \begin{table}[H]
     \centering
     \begin{tabularx}{\textwidth}{X X}
@@ -10,7 +14,7 @@
         Successfully Predicted & 100\%\\
         Mean Absolute Error (MAE) & 0.29 \\
         Root Mean Squared Error (RMSE) & 0.39 \\
-        Median Absolute Error & 0.23 \\
+        % Median Absolute Error & 0.23 \\
         Maximum Absolute Error & 4.94 \\
         $R^2$ & 0.92 \\
         Pearson $r$ & 0.96 \\
@@ -24,8 +28,8 @@
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{Code/Results/figures/scatter_actual_vs_predicted.pdf}
-    \caption{Scatter plot of true vs. predicted \gls{logp} values for the test set. The diagonal line represents perfect predictions. The "plateau" of predictions at the top right is due to a clamping effect caused by the quantization process.}
+    \includegraphics[width=0.7\textwidth]{Code/Results/figures/scatter_actual_vs_predicted.pdf}
+    \caption{Scatter plot of true vs. predicted \gls{logp} values for the test set. The diagonal line represents perfect predictions. The "plateau" of predictions at the top right is likely due to a clamping effect caused by the quantization process.}
     \label{fig:scatter_plot}
 \end{figure}
 
@@ -46,7 +50,7 @@
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{Code/Results/figures/absolute_error_histogram.pdf}
+    \includegraphics[width=0.7\textwidth]{Code/Results/figures/absolute_error_histogram.pdf}
     \caption{Histogram of absolute errors between predicted and true \gls{logp} values. The majority of predictions have an absolute error below 0.5, with a long tail extending to higher errors.}
     \label{fig:error_histogram}
 \end{figure}
