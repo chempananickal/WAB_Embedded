@@ -1,4 +1,5 @@
 tensorflow
+ai-edge-litert
 numpy
 pandas
 scikit-learn
