@@ -215,7 +215,7 @@ def build_figure(smiles: str, output_path: Path) -> Path:
     ax_canonical.text(0.62, 0.60, "Canonical SMILES", fontsize=11, fontweight="bold", color="#17324d", transform=ax_canonical.transAxes)
     ax_canonical.text(0.62, 0.45, wrap(canonical_smiles, 40), fontsize=12.5, color="#243746", transform=ax_canonical.transAxes)
 
-    draw_panel_title(ax_molecule, 2, "Build the Molecule Graph", "Canonical SMILES are parsed into an RDKit molecule and then fingerprinted with Morgan/ECFP4.")
+    draw_panel_title(ax_molecule, 2, "Build the Molecule Graph", "Canonical SMILES are parsed into an RDKit Mol, then fingerprinted with Morgan/ECFP4.")
     smiles_box = patches.FancyBboxPatch(
         (0.06, 0.66),
         0.36,
@@ -225,18 +225,22 @@ def build_figure(smiles: str, output_path: Path) -> Path:
         edgecolor="#d7e3ee",
         linewidth=1.1,
         transform=ax_molecule.transAxes,
+        zorder=4,
     )
     ax_molecule.add_patch(smiles_box)
-    ax_molecule.text(0.08, 0.73, "Canonical SMILES", fontsize=9.2, fontweight="bold", color="#17324d", transform=ax_molecule.transAxes)
-    ax_molecule.text(0.08, 0.68, canonical_smiles, fontsize=9.5, color="#243746", transform=ax_molecule.transAxes)
+    ax_molecule.text(0.08, 0.73, "Canonical SMILES", fontsize=9.2, fontweight="bold", color="#17324d", transform=ax_molecule.transAxes, zorder=5)
+    ax_molecule.text(0.08, 0.68, canonical_smiles, fontsize=9.5, color="#243746", transform=ax_molecule.transAxes, zorder=5)
     ax_molecule.annotate(
         "",
-        xy=(0.22, 0.62),
+        xy=(0.24, 0.56),
         xytext=(0.24, 0.66),
-        arrowprops={"arrowstyle": "-|>", "lw": 1.8, "color": "#6c8ca3"},
+        arrowprops={"arrowstyle": "-|>", "lw": 2.2, "color": "#6c8ca3"},
         xycoords=ax_molecule.transAxes,
+        zorder=7,
+        clip_on=False,
     )
-    molecule_inset = ax_molecule.inset_axes([0.05, 0.16, 0.48, 0.48])
+    molecule_inset = ax_molecule.inset_axes([0.05, 0.12, 0.48, 0.44])
+    molecule_inset.set_zorder(2)
     molecule_inset.imshow(molecule_image)
     molecule_inset.set_xticks([])
     molecule_inset.set_yticks([])
@@ -267,7 +271,7 @@ def build_figure(smiles: str, output_path: Path) -> Path:
     )
 
     draw_panel_title(ax_training, 3, "Train the Neural Network", "Morgan fingerprints become the model input during supervised training.")
-    ax_training.text(0.27, 0.75, "Aspirin ECFP4 fingerprint\n(32 lines × 64 bits)", ha="center", va="center", fontsize=10, color="#243746", transform=ax_training.transAxes)
+    ax_training.text(0.27, 0.78, "Generated ECFP4 fingerprint", ha="center", va="center", fontsize=10, color="#243746", transform=ax_training.transAxes)
     inset = ax_training.inset_axes([0.05, 0.20, 0.48, 0.54])
     inset.imshow(fingerprint_image)
     inset.set_xticks([])
@@ -322,12 +326,12 @@ def build_figure(smiles: str, output_path: Path) -> Path:
     ax_training.text(0.03, 0.08, training_text, fontsize=9.2, color="#4f6272", transform=ax_training.transAxes)
 
     draw_panel_title(ax_quant, 4, "Quantize the Model", "Post-training LiteRT conversion compresses the model for edge deployment.")
-    quant_box = patches.FancyBboxPatch((0.05, 0.20), 0.28, 0.48, boxstyle="round,pad=0.02,rounding_size=0.02", facecolor="#f8f4e8", edgecolor="#d8c48f", linewidth=1.2, transform=ax_quant.transAxes)
+    quant_box = patches.FancyBboxPatch((0.05, 0.23), 0.28, 0.43, boxstyle="round,pad=0.02,rounding_size=0.02", facecolor="#f8f4e8", edgecolor="#d8c48f", linewidth=1.2, transform=ax_quant.transAxes)
     ax_quant.add_patch(quant_box)
     ax_quant.text(0.19, 0.44, "Keras\nmodel", ha="center", va="center", fontsize=14, fontweight="bold", color="#735c0f", transform=ax_quant.transAxes)
-    ax_quant.annotate("", xy=(0.55, 0.44), xytext=(0.34, 0.44), arrowprops={"arrowstyle": "-|>", "lw": 2.5, "color": "#2b7a78"}, xycoords=ax_quant.transAxes)
+    ax_quant.annotate("", xy=(0.58, 0.44), xytext=(0.35, 0.44), arrowprops={"arrowstyle": "-|>", "lw": 2.5, "color": "#2b7a78"}, xycoords=ax_quant.transAxes)
     ax_quant.text(0.445, 0.54, "LiteRT\nconverter", ha="center", va="center", fontsize=10, color="#2b7a78", transform=ax_quant.transAxes)
-    quant_target = patches.FancyBboxPatch((0.58, 0.20), 0.30, 0.48, boxstyle="round,pad=0.02,rounding_size=0.02", facecolor="#edf6ed", edgecolor="#9dc4a8", linewidth=1.2, transform=ax_quant.transAxes)
+    quant_target = patches.FancyBboxPatch((0.58, 0.23), 0.30, 0.43, boxstyle="round,pad=0.02,rounding_size=0.02", facecolor="#edf6ed", edgecolor="#9dc4a8", linewidth=1.2, transform=ax_quant.transAxes)
     ax_quant.add_patch(quant_target)
     ax_quant.text(0.73, 0.49, "Quantized\n.tflite", ha="center", va="center", fontsize=14, fontweight="bold", color="#1d5f35", transform=ax_quant.transAxes)
     summary_cards = [

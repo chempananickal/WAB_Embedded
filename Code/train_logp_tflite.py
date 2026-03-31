@@ -145,7 +145,7 @@ def convert_to_litert(model: tf.keras.Model, x_train: np.ndarray, y_train: np.nd
         )
         converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
         converter.inference_input_type = tf.int8
-        converter.inference_output_type = tf.float32  # float32 output avoids int8 clamping on the output tensor
+        converter.inference_output_type = tf.float32  # float32 output hopefully avoids int8 clamping on the output tensor
     return converter.convert()
 
 
@@ -201,8 +201,8 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
     errors = y_true - y_pred
     mae = float(np.mean(np.abs(errors)))
     rmse = float(np.sqrt(np.mean(errors ** 2)))
-    ss_res = float(np.sum(errors ** 2))
-    ss_tot = float(np.sum((y_true - y_true.mean()) ** 2))
+    ss_res = float(np.sum(errors ** 2)) # Residual sum of squares
+    ss_tot = float(np.sum((y_true - y_true.mean()) ** 2)) # Total sum of squares
     r2 = 1.0 - ss_res / ss_tot
     within_half = float(np.mean(np.abs(errors) <= 0.5) * 100)
     max_err = float(np.max(np.abs(errors)))
